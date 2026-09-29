@@ -3,22 +3,21 @@
 Portable skills, hooks, and working conventions for Claude Code. This repo is
 the source of truth for every machine and every project.
 
-**Install the plugin — same script everywhere:**
+**Install the plugin (local machine):**
 
 ```bash
-git clone https://github.com/ianbleaker/snoozy-dev.git ~/snoozy-dev
+git clone https://github.com/ianbleaker/snoozy-dev ~/snoozy-dev
 ~/snoozy-dev/scripts/install-plugin.sh
 ```
 
-Skills then appear namespaced (`/snoozy-dev:onboard`, …). Then, for a local
-machine, apply Layer 1 below (CLAUDE.md + settings snippet), and in each
-project run `/snoozy-dev:onboard`.
+Skills are namespaced (`/snoozy-dev:onboard`, …). While editing the skills
+themselves, use `claude --plugin-dir ~/snoozy-dev/plugins/snoozy-dev` to load
+your working tree live. Then apply Layer 1 below and run
+`/snoozy-dev:onboard` in each project.
 
-**Claude Code in the Cloud:** cloud sessions do **not** install plugins that a
-repo declares in `.claude/settings.json` (`enabledPlugins` /
-`extraKnownMarketplaces` are ignored there), and `~/.claude` isn't carried
-over. Add the install to the cloud environment's **setup script** instead —
-see the README section "Adding this to a cloud session".
+**Claude Code in the Cloud:** see the README section "Adding this to Claude
+Code in the Cloud" (setup script once per environment + SessionStart hook per
+repo, added by `/onboard`).
 
 Plugins can't ship `global/CLAUDE.md` or the settings snippet — those remain
 Layer 1 (local) only. In cloud repos, put anything from `global/CLAUDE.md` you
@@ -51,7 +50,7 @@ Rules of thumb:
 
 Symlink CLAUDE.md so this repo stays the source of truth. (Skills and the agent
 are installed by the plugin — symlinking them won't work, since they rely on
-`${CLAUDE_PLUGIN_ROOT}`; re-run `scripts/install-plugin.sh` to pick up edits.)
+`${CLAUDE_PLUGIN_ROOT}`; the SessionStart hook or a re-run of `scripts/install-plugin.sh` picks up edits.)
 
 ```bash
 ln -sf ~/snoozy-dev/global/CLAUDE.md ~/.claude/CLAUDE.md
@@ -221,6 +220,6 @@ gap because it is cached in the artifacts, not carried by the model.
 
 ## Maintenance
 
-- This repo is versioned; commit every change. CLAUDE.md edits propagate via the symlink; skill edits need `scripts/install-plugin.sh` re-run (or `/plugin marketplace update`).
+- This repo is versioned; commit every change. CLAUDE.md edits propagate via the symlink; skill edits reach sessions via the SessionStart hook (or a re-run of `scripts/install-plugin.sh`).
 - Review `global/CLAUDE.md` occasionally: anything that has grown past a line or two should move into a skill or a hook.
 - When a project invents a pattern worth reusing (a good hook, a driver, a workflow), generalize it into `plugins/snoozy-dev/project-patterns/` or a global skill here.

@@ -20,7 +20,32 @@ Check for `package.json` + `tsconfig.json` (TypeScript), `pyproject.toml`/`requi
 
 ## 2. Write `.claude/settings.json`
 
-Merge into any existing file. Two hooks plus a permissions baseline.
+Merge into any existing file. Two hooks plus a permissions baseline, plus the
+plugin-freshness hook below.
+
+**Plugin-freshness hook (always add).** Cloud sessions don't read `~/.claude`
+or repo-declared plugins, so this SessionStart hook pulls the latest
+snoozy-dev and refreshes the plugin every session (a few seconds; never
+blocks start). Merge into `hooks.SessionStart`; skip if a hook already runs
+`install-plugin.sh`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=$HOME/snoozy-dev; [ -d $d/.git ] || git clone -q --depth 1 https://github.com/ianbleaker/snoozy-dev.git $d; $d/scripts/install-plugin.sh || true",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
 **Verify hooks (TypeScript example — adapt the commands per the table below):**
 
