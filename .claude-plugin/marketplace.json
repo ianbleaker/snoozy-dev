@@ -1,0 +1,14 @@
+{
+  "name": "snoozy-dev",
+  "owner": { "name": "Ian Bleaker" },
+  "metadata": {
+    "description": "Snoozy dev workflow skills: task pipeline, plan/implement/audit, preview staging, deploy."
+  },
+  "plugins": [
+    {
+      "name": "snoozy-dev",
+      "source": "./plugins/snoozy-dev",
+      "description": "Skills and the task-worker agent for the snoozy-dev workflow (/onboard, /write-plan, /implement-plan, /next-task, /batch-tasks, /stage-preview, /merge-preview, /deploy, ...)."
+    }
+  ]
+}
