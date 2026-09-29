@@ -1,12 +1,11 @@
 ---
 name: batch-tasks
-description: Implements up to N (default 5) eligible status:ready tickets unattended — one task-worker agent and one PR each, in parallel worktrees — then auto-stages the resulting PRs on preview and sense-checks it before a single smoke-test pass. Use when the user wants to batch several ready tasks at once. Argument (optional) - [N] [--dry-run].
+description: Implements up to N (default 5) eligible status:ready tickets unattended — one task-worker agent and one PR each, in parallel worktrees — then offers to stage the resulting PRs on preview (never automatically) for a single smoke-test pass. Use when the user wants to batch several ready tasks at once. Argument (optional) - [N] [--dry-run].
 ---
 
 Select a batch of non-overlapping ready tickets, confirm it once, fan out one
-`task-worker` agent per ticket, then stage the successes on preview and
-sense-check it. The confirmation in step 5 is the only question before the
-smoke test, unless the sense check fails.
+`task-worker` agent per ticket, then offer to stage the successes on preview
+(and sense-check it). Staging deploys, so it's asked, never automatic.
 
 ## Steps
 
@@ -58,7 +57,7 @@ smoke test, unless the sense check fails.
    an explicit "run as shown" option). `AskUserQuestion` allows 4 options
    per question and 4 questions per call — spread the drops across up to 4
    questions in this one call; the user names any beyond that via "Other".
-   This is the only interaction before the smoke test. A re-added item
+   This is the only interaction before the workers finish. A re-added item
    needs its body on disk: `gh issue view <N> --repo <repo> --json body
    --jq .body > <scratchpad>/body-<N>.md`.
 
@@ -83,21 +82,27 @@ smoke test, unless the sense check fails.
      worker's `discovered` list → `/log-task` per approved item. Spread
      items across up to 4 questions in the one call (4 options each); the
      user names any beyond that via "Other".
-   - **Stage:** `/stage-preview <issue numbers of successful PRs>` (1 success
-     → its single-arg bypass; 0 → skip staging). A deploy failure is relayed
-     verbatim; the PRs stay open. `/stage-preview` runs the sense check
-     (its steps 4–5). On failure it asks whether to `/fix-bug` a ticket,
-     using the ticket's own branch; any fix restages and rechecks there.
+   - **Stage (prompt, never automatic):** 0 successes → skip. Otherwise add
+     one question — "Stage PRs #a, #b on preview now?" (Stage / Not now) —
+     to the same `AskUserQuestion` call as the discovered-items questions
+     (or alone if there are none). Never run `/stage-preview` without a
+     "Stage" answer. On "Stage": `/stage-preview <issue numbers of
+     successful PRs>` (1 success → its single-arg bypass). A deploy failure
+     is relayed verbatim; the PRs stay open. `/stage-preview` runs the sense
+     check (its steps 4–5). On failure it asks whether to `/fix-bug` a
+     ticket, using the ticket's own branch; any fix restages and rechecks
+     there. On "Not now": skip; the user can run `/stage-preview` later.
 
 8. **Final report.** A table with one row per ticket considered: `PR #…` |
    `bailed: <reason>` | `dropped: <reason>`. Then the merged smoke-test
-   checklist (every worker's `smoke_test` items, grouped by ticket) and the
-   preview URL (the `Preview:` line from `/stage-preview`'s output; if it
-   warned that none is configured, say so). Put the final sense-check result
-   first, above the table. If it still fails (the user chose "Leave it"),
-   lead with the failure and say preview is not ready for smoke testing,
-   instead of presenting the checklist as ready. End with: once the smoke
-   test passes, `/clear` then `/merge-preview` merges everything staged —
+   checklist (every worker's `smoke_test` items, grouped by ticket). If
+   staged: the preview URL (the `Preview:` line from `/stage-preview`'s
+   output; if it warned that none is configured, say so), with the final
+   sense-check result first, above the table. If it still fails (the user
+   chose "Leave it"), lead with the failure and say preview is not ready
+   for smoke testing, instead of presenting the checklist as ready. If not
+   staged: say preview was not touched and end with `/stage-preview <issue
+   numbers>` as the next step. Once staged and the smoke test passes, `/clear` then `/merge-preview` merges everything staged —
    it needs nothing from this session (it reads preview and the PRs), and
    starting fresh skips re-reading this whole batch on every merge turn.
 
@@ -107,7 +112,8 @@ smoke test, unless the sense check fails.
   the smoke test.
 - Never resolve a conflict — stop and report.
 - Dropped and bailed tickets keep their labels; this skill never edits labels.
-- The confirmation in step 5 is the only question before the smoke test.
-  Two exceptions: step 7's discovered-items question comes after the work
-  is done, and `/stage-preview`'s fix question appears only when the sense
-  check fails.
+- Never stage or deploy preview without an explicit "Stage" answer to
+  step 7's prompt.
+- The confirmation in step 5 is the only question before the workers
+  finish. After that: step 7's discovered-items and stage questions (one
+  call), and `/stage-preview`'s fix question only when the sense check fails.
