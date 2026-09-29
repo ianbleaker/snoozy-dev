@@ -22,6 +22,10 @@ Decisions already made (do not re-litigate):
 - **Playwright/Chromium in cloud:** Chromium is preinstalled (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`); the project needs `npm ci` if `node_modules` is missing.
 - **Unverified (the plan must not assume):** whether the cloud environment's network policy allows outbound SSH on 22 and HTTP to the preview `ip:port`; whether the VPS firewall restricts by source IP. The preflight is how these get answered; failure means CLI-only, not a broken skill.
 
+Deferred: logged as #5 - Fix deploy-scripts.md path citations
+Deferred: logged as #6 - Adopt cloud-only capabilities in skills
+Deferred: logged as #7 - Add non-root deploy user for VPS deploys
+
 ## Before starting
 
 - Read `CLAUDE.md` (invariants: skills in `plugins/snoozy-dev/skills/<name>/SKILL.md`, helper scripts next to the skill that uses them — the shared ones go in `project-patterns/`; never overwrite a user's existing project config; doc-sync table).
