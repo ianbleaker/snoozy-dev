@@ -46,7 +46,7 @@ You run in a fresh worktree with no dependencies installed. Start with
 Either way, once the project's verify passes for the whole task: commit,
 `git push -u origin task/<N>-<slug>`, then `gh pr create --base main --head
 task/<N>-<slug> --title "..." --body "Closes #N\n\n<summary>"`. Exactly one
-PR, opened after the last commit.
+PR, opened after the last commit. PR body is `Closes #N` plus the summary only — no "Generated with Claude Code" line, session URL, or attribution footer.
 
 ## Advisor
 
