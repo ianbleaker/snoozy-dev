@@ -1,0 +1,8 @@
+{
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Allow `git branch -D <branch>` with no confirmation prompt when run as part of the /sweep-tasks skill, and only for a local branch matching `task/<issue-number>-*` whose upstream shows `gone` after `git fetch --prune`. Squash-merge means git never records the branch as an ancestor of `main`, so the safe `-d` always refuses on a legitimately merged branch, and `gone` only happens via GitHub's delete-on-merge or a manual delete the user already performed — so the local copy is never live work. Does not cover any other local branch, any non-task/* branch, or deletion run outside /sweep-tasks."
+    ]
+  }
+}

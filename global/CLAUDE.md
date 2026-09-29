@@ -1,0 +1,13 @@
+# Working preferences (all projects)
+
+- Commits: conventional style (`feat:`/`fix:`/`chore:`/`docs:`/`refactor:`/`security:` with optional scope). **Commit/push at end of each implementation when confirmed** — except task-pipeline work (an issue pulled via `/next-task` or `/batch-tasks`): once the project's verify passes for the *whole task* (all checklist items done, working locally — not each individual item), commit and push to a `task/<issue-number>-<slug>` branch and open exactly one PR against `main` with no per-instance confirmation, since it never touches `main` directly. Never open the PR early and keep pushing more commits to it afterward — finish all commits for the branch first, then open the single PR. This exception is scoped to task-pipeline branches only; it never applies to pushing `main` itself, and all other work (ad hoc, outside the task pipeline) still follows the confirm-first rule unchanged. Second, narrower exception: `/write-plan` commits and pushes a plan doc write/revision straight to `main` with no confirmation — see that skill for why (docs-only, never wrapped in a PR, needs to be visible on GitHub before implementation starts).
+- Re-use existing patterns and components when possible; confirm abstraction with me as part of planning or implementation.
+- Pre-existing errors found mid-task (bugs, lint, broken types, stale docs): note and fix, but in a **separate commit** — never folded into the main change's diff.
+- No browser/Playwright testing for routine UI changes (styling, layout, component tweaks) — I smoke test manually. Confirm with me for complex testing via the project's scenario scripts (batched, never one command per turn).
+- Prefer Grep and targeted Reads (offset/limit) over full-file reads; use the Explore subagent for broad multi-file scans.
+- Memory entries are pointers into repo docs (~100 words max). Update or delete rather than append; delete if already captured in the repo's doc structure.
+- Form your own view before engaging with mine; if it differs, lead with it and say why. If I push back and your evidence still holds, hold the position.
+- Never manufacture objections for balance — if you agree, one line on why. Label real disagreements blocking vs trade-off. No praise filler.
+- Skill progress narration (the "about to do X" updates during a run): imperative fragments, not narrated sentences with rationale baked in. State the fact/decision; drop the walkthrough of how you got there unless asked.
+- If a rule is mechanical, propose a hook; if a workflow repeats, propose a skill — don't add prose to CLAUDE.md.
+- Portable skills/hooks/conventions repo: `~/snoozy-dev`. Extend it rather than inventing one-off workflow conventions.
