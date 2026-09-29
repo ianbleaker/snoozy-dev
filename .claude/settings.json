@@ -1,0 +1,43 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // \"\"'); echo \"$f\" | grep -qE '\\.(sh|mjs)$' && cd \"$CLAUDE_PROJECT_DIR\" && scripts/verify.sh \"$f\" 2>&1 | tail -5 || true",
+            "timeout": 30,
+            "statusMessage": "Syntax-checking..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && scripts/verify.sh 2>&1 | tail -10 || true",
+            "timeout": 60,
+            "statusMessage": "Final syntax check..."
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git status*)", "Bash(git log*)", "Bash(git diff*)", "Bash(git show*)",
+      "Bash(git branch*)", "Bash(ls*)", "Bash(grep*)", "Bash(rg*)", "Bash(find*)",
+      "Bash(wc*)", "Bash(which*)", "Bash(scripts/verify.sh*)", "Bash(bash -n*)", "Bash(node --check*)"
+    ],
+    "deny": [
+      "Read(**/.env)", "Read(**/.env.*)", "Read(**/*.pem)", "Read(**/id_rsa*)",
+      "Bash(git push --force*)", "Bash(git push -f*)"
+    ],
+    "ask": [
+      "Bash(git reset --hard*)", "Bash(git clean*)", "Bash(rm -rf*)"
+    ]
+  }
+}
