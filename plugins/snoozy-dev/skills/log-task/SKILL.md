@@ -70,6 +70,7 @@ list until the user relabels them to `status:ready`.
 
 - `status:draft` is set directly in the `gh issue create` call in step 3 —
   there is no longer a separate step to skip.
+- Issue body is only the summary, `## Dependencies` and `## Touches` — no "Generated with Claude Code" line, session URL, or other attribution footer.
 - No cross-issue search to fill the `## Dependencies` lines — use only what
   the caller's context names; finding relationships is triage's job.
 - Never create more than one issue per call. Batch callers (write-plan's

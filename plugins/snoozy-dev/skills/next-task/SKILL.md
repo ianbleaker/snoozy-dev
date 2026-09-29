@@ -43,7 +43,7 @@ route it to the right workflow.
      branch as the base has produced wrong-base PRs before. Then commit,
      push, `gh pr create --base main
      --head task/<issue-number>-<slug> --title "..." --body "Closes
-     #<issue-number>\n\n<summary>"`. That's it — In Review is derived (an
+     #<issue-number>\n\n<summary>"`. PR body is that only — no "Generated with Claude Code" line, session URL, or attribution footer. That's it — In Review is derived (an
      open PR exists on the `task/*` branch), true automatically the moment
      the PR is open, nothing to set.
    - **`size:medium` / `size:large`** — check whether a plan doc already
