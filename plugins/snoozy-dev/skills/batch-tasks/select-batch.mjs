@@ -46,9 +46,12 @@ const ready = JSON.parse(sh('gh', ['issue', 'list', '--repo', repo, '--label', '
   '--limit', '200', '--json', 'number,title,labels,body']));
 const openIssues = new Set(JSON.parse(sh('gh', ['issue', 'list', '--repo', repo, '--state', 'open',
   '--limit', '1000', '--json', 'number'])).map((i) => i.number));
-const inReview = new Set(JSON.parse(sh('gh', ['pr', 'list', '--repo', repo, '--state', 'open',
-  '--limit', '200', '--json', 'headRefName']))
+const openPrs = JSON.parse(sh('gh', ['pr', 'list', '--repo', repo, '--state', 'open',
+  '--limit', '200', '--json', 'headRefName,closingIssuesReferences']));
+const inReview = new Set(openPrs
   .map((p) => p.headRefName.match(/^task\/(\d+)-/)?.[1]).filter(Boolean).map(Number));
+// Issues that already have an open PR (task branch or `Closes #N`) — never re-batch.
+const hasOpenPr = new Set([...inReview, ...openPrs.flatMap((p) => p.closingIssuesReferences.map((i) => i.number))]);
 
 const label = (issue, prefix) => issue.labels.map((l) => l.name).find((n) => n.startsWith(prefix))?.slice(prefix.length);
 const nums = (s) => (s && !/^none\b/i.test(s) ? [...s.matchAll(/#(\d+)/g)].map((m) => Number(m[1])) : []);
@@ -87,6 +90,7 @@ const checks = ready.map(async (issue) => {
   const d = deps(issue.body);
   const size = label(issue, 'size:');
   const why = (r) => ineligible.push({ n, r });
+  if (hasOpenPr.has(n)) return why('already has an open PR');
   if (!d) return why('no ## Dependencies block');
   if (!/^none\b/i.test(d.decision)) return why(`decision needed: ${d.decision}`);
   let plan = 'none';

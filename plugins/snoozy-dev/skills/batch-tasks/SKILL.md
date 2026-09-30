@@ -18,7 +18,9 @@ Select a batch of non-overlapping ready tickets, confirm it once, fan out one
    issue body to `<scratchpad>/body-<N>.md`. Don't re-derive
    what it prints — no reading `/next-task`, `task-labels.md` or analysis
    docs to rebuild eligibility or footprints. The rules it applies:
-   - **Eligible** only if all hold: a `## Dependencies` block (see
+   - **Eligible** only if all hold: no open PR already exists for it (a
+     `task/<N>-*` head branch or a `Closes #N` link — such tickets are
+     skipped, listed under INELIGIBLE); a `## Dependencies` block (see
      "Dependencies" in `${CLAUDE_PLUGIN_ROOT}/project-patterns/task-labels.md`) —
      no block means unknown, not safe; no open blocker (native
      `blocked_by` links or the `Blocked by:` line); `Decision needed: none`;
