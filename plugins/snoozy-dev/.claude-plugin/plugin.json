@@ -1,7 +1,7 @@
 {
   "name": "snoozy-dev",
   "description": "Snoozy dev workflow skills: task pipeline, plan/implement/audit, preview staging, deploy.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": { "name": "ianbleaker" },
   "repository": "https://github.com/ianbleaker/snoozy-dev"
 }
