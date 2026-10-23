@@ -16,14 +16,11 @@ Review the memory directory against what happened this session:
 
 ## 2. Doc-sync check
 
-If code changed this session and the project has a doc-sync table (in project
-CLAUDE.md or its architecture overview), verify each mapped living doc was
-updated. Fix gaps now — don't defer.
+If code changed this session and the project has a doc-sync table (in project CLAUDE.md or its architecture overview), verify each mapped living doc was updated. Fix gaps now — don't defer.
 
 ## 3. Working-tree status
 
-`git status` + the project's verify commands (typecheck/lint/tests). Report
-uncommitted changes and whether verification passes. Do not commit unless asked.
+`git status` + the project's verify commands (typecheck/lint/tests). Report uncommitted changes and whether verification passes. Do not commit unless asked.
 
 ## 4. Handoff
 

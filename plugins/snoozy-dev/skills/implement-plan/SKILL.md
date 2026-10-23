@@ -3,8 +3,7 @@ name: implement-plan
 description: Implement a checklist plan document (migration/plan doc) in order, checking items off, staying strictly in scope. Use when asked to implement, continue, or resume a migration or plan doc. Argument - path to the plan doc.
 ---
 
-Implement the plan document at the given path. The doc is the contract: its
-checklist is the scope, its "Do not do" section is binding.
+Implement the plan document at the given path. The doc is the contract: its checklist is the scope, its "Do not do" section is binding.
 
 ## Steps
 

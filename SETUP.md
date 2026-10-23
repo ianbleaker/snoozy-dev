@@ -1,7 +1,6 @@
 # Snoozy Dev Playbook
 
-Portable skills, hooks, and working conventions for Claude Code. This repo is
-the source of truth for every machine and every project.
+Portable skills, hooks, and working conventions for Claude Code. This repo is the source of truth for every machine and every project.
 
 **Install the plugin — same script everywhere:**
 
@@ -10,26 +9,17 @@ git clone https://github.com/ianbleaker/snoozy-dev.git ~/snoozy-dev
 ~/snoozy-dev/scripts/install-plugin.sh
 ```
 
-Skills then appear namespaced (`/snoozy-dev:onboard`, …). Then, for a local
-machine, apply Layer 1 below (CLAUDE.md + settings snippet), and in each
-project run `/snoozy-dev:onboard`.
+Skills then appear namespaced (`/snoozy-dev:onboard`, …). Then, for a local machine, apply Layer 1 below (CLAUDE.md + settings snippet), and in each project run `/snoozy-dev:onboard`.
 
-**Claude Code in the Cloud:** cloud sessions do **not** install plugins that a
-repo declares in `.claude/settings.json` (`enabledPlugins` /
-`extraKnownMarketplaces` are ignored there), and `~/.claude` isn't carried
-over. Add the install to the cloud environment's **setup script** instead —
-see the README section "Adding this to a cloud session".
+**Claude Code in the Cloud:** cloud sessions do **not** install plugins that a repo declares in `.claude/settings.json` (`enabledPlugins` / `extraKnownMarketplaces` are ignored there), and `~/.claude` isn't carried over. Add the install to the cloud environment's **setup script** instead — see the README section "Adding this to a cloud session".
 
-Plugins can't ship `global/CLAUDE.md` or the settings snippet — those remain
-Layer 1 (local) only. In cloud repos, put anything from `global/CLAUDE.md` you
-need into the repo's own CLAUDE.md.
+Plugins can't ship `global/CLAUDE.md` or the settings snippet — those remain Layer 1 (local) only. In cloud repos, put anything from `global/CLAUDE.md` you need into the repo's own CLAUDE.md.
 
 ---
 
 ## Token economics — why this is shaped the way it is
 
-Every mechanism Claude Code offers has a different context cost. Put each thing
-where it costs least:
+Every mechanism Claude Code offers has a different context cost. Put each thing where it costs least:
 
 | Mechanism | Cost | Use for |
 | --- | --- | --- |
@@ -49,17 +39,13 @@ Rules of thumb:
 
 ## Layer 1 — Global (install once per machine)
 
-Symlink CLAUDE.md so this repo stays the source of truth. (Skills and the agent
-are installed by the plugin — symlinking them won't work, since they rely on
-`${CLAUDE_PLUGIN_ROOT}`; re-run `scripts/install-plugin.sh` to pick up edits.)
+Symlink CLAUDE.md so this repo stays the source of truth. (Skills and the agent are installed by the plugin — symlinking them won't work, since they rely on `${CLAUDE_PLUGIN_ROOT}`; re-run `scripts/install-plugin.sh` to pick up edits.)
 
 ```bash
 ln -sf ~/snoozy-dev/global/CLAUDE.md ~/.claude/CLAUDE.md
 ```
 
-`~/.claude/settings.json` holds machine-specific config (model, theme, etc.) so it
-isn't symlinked wholesale — merge `global/settings.snippet.json` into it instead
-(re-run after any snippet update):
+`~/.claude/settings.json` holds machine-specific config (model, theme, etc.) so it isn't symlinked wholesale — merge `global/settings.snippet.json` into it instead (re-run after any snippet update):
 
 ```bash
 jq -s '.[0] * .[1]' ~/.claude/settings.json ~/snoozy-dev/global/settings.snippet.json \
@@ -95,49 +81,23 @@ If a machine already has a `~/.claude/CLAUDE.md`, merge instead of overwriting.
 
 ## Layer 2 — Per project (run `/onboard` in the repo)
 
-`/onboard` detects the stack and writes `.claude/settings.json` plus a project
-CLAUDE.md skeleton. The hook snippets live inside the onboard skill
-(`plugins/snoozy-dev/skills/onboard/SKILL.md`) — single source of truth. Summary:
+`/onboard` detects the stack and writes `.claude/settings.json` plus a project CLAUDE.md skeleton. The hook snippets live inside the onboard skill (`plugins/snoozy-dev/skills/onboard/SKILL.md`) — single source of truth. Summary:
 
-1. **Verify hooks.** Per-edit incremental typecheck (immediate feedback, ~1–2 s)
-   plus a Stop hook running typecheck and lint on changed files as the final
-   gate. Catching a type error right after the edit that caused it is cheap;
-   untangling five stacked edits at end of turn is not.
-2. **Permissions baseline.** Read-only commands (`git status/log/diff`, `ls`,
-   `grep`/`rg`, `find`, …) allowlisted so sessions don't stall on prompts.
-   For an existing project with history, `/fewer-permission-prompts` can mine
-   transcripts instead.
-3. **Project CLAUDE.md skeleton.** Sections: one-line purpose, hard invariants,
-   pointers to reference docs, doc-sync table (edited file → which living doc
-   to update), verify commands, plan-doc location.
-4. **Safety rules.** Permissions deny-list for secrets reads and force-pushes,
-   ask-list for destructive commands. Weaker models make these mistakes more
-   often; the rules cost zero tokens and apply identically to every model.
-5. **Git pre-commit gate.** A real `.git/hooks/pre-commit` running the verify
-   commands. The Stop hook is *feedback*; this is the *gate* — it protects the
-   durable action regardless of which model, session, or human is committing.
-6. **CI workflow.** If the repo has a GitHub remote: a minimal Actions workflow
-   running the verify commands on push/PR. The strongest model-independent
-   check of all — it catches whatever every hook, model, and human missed.
-7. **Task tracking bootstrap.** Create the `type:*`/`priority:*`/`size:*`/`status:*`
-   labels (`plugins/snoozy-dev/project-patterns/task-labels.md`) on the repo if
-   missing — task *status* lives in the `status:*` labels. Retires the
-   old per-project "open questions" doc — task capture now goes through
-   `/log-task`/`/next-task` against GitHub Issues instead.
+1. **Verify hooks.** Per-edit incremental typecheck (immediate feedback, ~1–2 s) plus a Stop hook running typecheck and lint on changed files as the final gate. Catching a type error right after the edit that caused it is cheap; untangling five stacked edits at end of turn is not.
+2. **Permissions baseline.** Read-only commands (`git status/log/diff`, `ls`, `grep`/`rg`, `find`, …) allowlisted so sessions don't stall on prompts. For an existing project with history, `/fewer-permission-prompts` can mine transcripts instead.
+3. **Project CLAUDE.md skeleton.** Sections: one-line purpose, hard invariants, pointers to reference docs, doc-sync table (edited file → which living doc to update), verify commands, plan-doc location.
+4. **Safety rules.** Permissions deny-list for secrets reads and force-pushes, ask-list for destructive commands. Weaker models make these mistakes more often; the rules cost zero tokens and apply identically to every model.
+5. **Git pre-commit gate.** A real `.git/hooks/pre-commit` running the verify commands. The Stop hook is *feedback*; this is the *gate* — it protects the durable action regardless of which model, session, or human is committing.
+6. **CI workflow.** If the repo has a GitHub remote: a minimal Actions workflow running the verify commands on push/PR. The strongest model-independent check of all — it catches whatever every hook, model, and human missed.
+7. **Task tracking bootstrap.** Create the `type:*`/`priority:*`/`size:*`/`status:*` labels (`plugins/snoozy-dev/project-patterns/task-labels.md`) on the repo if missing — task *status* lives in the `status:*` labels. Retires the old per-project "open questions" doc — task capture now goes through `/log-task`/`/next-task` against GitHub Issues instead.
 
-**Project CLAUDE.md diet:** invariants and pointers, never reference content.
-A vocabulary table or data-model description belongs in `docs/` with a one-line
-pointer from CLAUDE.md. Budget: ~60 lines.
+**Project CLAUDE.md diet:** invariants and pointers, never reference content. A vocabulary table or data-model description belongs in `docs/` with a one-line pointer from CLAUDE.md. Budget: ~60 lines.
 
 ### Pattern: invariant guard hooks
 
-Any rule you catch yourself writing CLAUDE.md prose about — and Claude still
-occasionally violating — should become a PostToolUse hook that greps the
-written file and **feeds a warning back** (stderr + exit 2) so Claude fixes it
-in-flow. Warn, don't hard-block: false positives stay cheap.
+Any rule you catch yourself writing CLAUDE.md prose about — and Claude still occasionally violating — should become a PostToolUse hook that greps the written file and **feeds a warning back** (stderr + exit 2) so Claude fixes it in-flow. Warn, don't hard-block: false positives stay cheap.
 
-Example (a design-token invariant: no raw hex or font literals outside the
-theme file):
+Example (a design-token invariant: no raw hex or font literals outside the theme file):
 
 ```json
 {
@@ -158,34 +118,19 @@ theme file):
 }
 ```
 
-Adapt the file globs and the grep to whatever the project's mechanical
-invariant is (import bans, naming rules, forbidden APIs, …).
+Adapt the file globs and the grep to whatever the project's mechanical invariant is (import bans, naming rules, forbidden APIs, …).
 
 ### Pattern: review rubric
 
-Cached judgment: `docs/review-rubric.md` lists *this codebase's* specific
-failure modes ("touching events? verify the visibility filter"), written by a
-planner-tier session after real bugs and reviews, consumed by `/audit-plan` and
-code reviews at any tier. See
-[`project-patterns/review-rubric.md`](plugins/snoozy-dev/project-patterns/review-rubric.md).
+Cached judgment: `docs/review-rubric.md` lists *this codebase's* specific failure modes ("touching events? verify the visibility filter"), written by a planner-tier session after real bugs and reviews, consumed by `/audit-plan` and code reviews at any tier. See [`project-patterns/review-rubric.md`](plugins/snoozy-dev/project-patterns/review-rubric.md).
 
 ### Pattern: smoke-test scenario library (UI apps)
 
-See [`plugins/snoozy-dev/project-patterns/smoke-driver.md`](plugins/snoozy-dev/project-patterns/smoke-driver.md).
-The rule that matters: **never drive a browser one command per model turn.**
-Write or extend a named scenario script, run it once, read the result. A smoke
-test should be 1–2 Bash calls, not 40 round-trips.
+See [`plugins/snoozy-dev/project-patterns/smoke-driver.md`](plugins/snoozy-dev/project-patterns/smoke-driver.md). The rule that matters: **never drive a browser one command per model turn.** Write or extend a named scenario script, run it once, read the result. A smoke test should be 1–2 Bash calls, not 40 round-trips.
 
 ### Pattern: deploy scripts (offered, not auto-scaffolded)
 
-See [`plugins/snoozy-dev/project-patterns/deploy-scripts.md`](plugins/snoozy-dev/project-patterns/deploy-scripts.md).
-Stack-agnostic shape for a project's `deploy/` folder: one systemd service,
-one git checkout, idempotent `setup.sh` + repeatable `deploy.sh`
-(pull → install deps → restart → verify, no silent rollback), plus a
-`preview-setup.sh`/`preview-deploy.sh` pair tracking a disposable `preview`
-branch on a second instance. `/onboard` offers the full four-script scaffold
-if no `deploy/` folder exists yet, or just the preview pair alongside an
-existing hand-rolled `deploy/setup.sh`/`deploy.sh` — never rewrites one.
+See [`plugins/snoozy-dev/project-patterns/deploy-scripts.md`](plugins/snoozy-dev/project-patterns/deploy-scripts.md). Stack-agnostic shape for a project's `deploy/` folder: one systemd service, one git checkout, idempotent `setup.sh` + repeatable `deploy.sh` (pull → install deps → restart → verify, no silent rollback), plus a `preview-setup.sh`/`preview-deploy.sh` pair tracking a disposable `preview` branch on a second instance. `/onboard` offers the full four-script scaffold if no `deploy/` folder exists yet, or just the preview pair alongside an existing hand-rolled `deploy/setup.sh`/`deploy.sh` — never rewrites one.
 
 ---
 
@@ -203,9 +148,7 @@ These can't be installed; they're how you use the tool.
 
 ### Model tiering
 
-Match the model to the session type, not to the project. Think in **tiers, not
-model names** — when access changes (e.g. Fable moving to usage credits), every
-role falls back one slot and nothing here needs rewriting:
+Match the model to the session type, not to the project. Think in **tiers, not model names** — when access changes (e.g. Fable moving to usage credits), every role falls back one slot and nothing here needs rewriting:
 
 | Tier | Currently | Fallback | Use for |
 | --- | --- | --- | --- |
@@ -213,10 +156,7 @@ role falls back one slot and nothing here needs rewriting:
 | **Executor** | Sonnet | — | `/implement-plan`, `/fix-bug`, `task-worker` (via `/batch-tasks`), mechanical refactors |
 | **Chore** | Haiku | — | scenario runs, doc formatting, scripted batch edits |
 
-The artifacts are the bridge between tiers: the planner writes docs assuming a
-literal-minded executor; the executor escalates instead of improvising; the
-auditor checks conformance and resolves escalations. Quality survives the tier
-gap because it is cached in the artifacts, not carried by the model.
+The artifacts are the bridge between tiers: the planner writes docs assuming a literal-minded executor; the executor escalates instead of improvising; the auditor checks conformance and resolves escalations. Quality survives the tier gap because it is cached in the artifacts, not carried by the model.
 
 ---
 

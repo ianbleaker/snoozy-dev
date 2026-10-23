@@ -1,12 +1,8 @@
 # Smoke-test scenario library (UI apps)
 
-The most expensive Claude Code habit observed in practice: driving a browser
-interactively — one `click`/`fill`/`wait` per model turn. A single debugging
-session this way can burn more tokens than a week of normal work (measured:
-159 Bash round-trips in one session).
+The most expensive Claude Code habit observed in practice: driving a browser interactively — one `click`/`fill`/`wait` per model turn. A single debugging session this way can burn more tokens than a week of normal work (measured: 159 Bash round-trips in one session).
 
-**The rule: scenarios, not sessions.** All browser driving goes through named,
-batched scripts. A smoke test is 1–2 Bash calls: run the scenario, read the result.
+**The rule: scenarios, not sessions.** All browser driving goes through named, batched scripts. A smoke test is 1–2 Bash calls: run the scenario, read the result.
 
 ## Structure (per project)
 
@@ -21,8 +17,7 @@ batched scripts. A smoke test is 1–2 Bash calls: run the scenario, read the re
     relay-pair.txt
 ```
 
-A scenario file is a plain list of driver commands, ending with `errors` (and
-optionally `screenshot <name>`):
+A scenario file is a plain list of driver commands, ending with `errors` (and optionally `screenshot <name>`):
 
 ```
 nav http://localhost:5173
@@ -36,11 +31,7 @@ quit
 
 Run: `node .claude/skills/smoke-test/driver.mjs < scenarios/create-journal.txt`
 
-**Commit it.** The skill is app-specific (selectors, flows), so it lives in
-the project repo, not here. Claude Code only discovers project skills under
-`.claude/skills/`, so if the project ignores `.claude/`, un-ignore just that
-folder (the directory pattern must become `.claude/*`, or git can't negate
-inside it) and keep run output ignored:
+**Commit it.** The skill is app-specific (selectors, flows), so it lives in the project repo, not here. Claude Code only discovers project skills under `.claude/skills/`, so if the project ignores `.claude/`, un-ignore just that folder (the directory pattern must become `.claude/*`, or git can't negate inside it) and keep run output ignored:
 
 ```gitignore
 .claude/*
@@ -58,8 +49,4 @@ inside it) and keep run output ignored:
 
 ## Reference implementation
 
-`plugins/snoozy-dev/project-patterns/smoke-driver.mjs` (in the snoozy-dev repo) — a Playwright stdin REPL
-supporting `nav`, `click`, `fill`, `type`, `press`, `wait`, `wait-text`,
-`eval`, `screenshot`, `errors`, `title`, `url`, `quit`. Copy into the
-project's `.claude/skills/smoke-test/driver.mjs` and adapt selectors per app;
-the driver itself is app-agnostic.
+`plugins/snoozy-dev/project-patterns/smoke-driver.mjs` (in the snoozy-dev repo) — a Playwright stdin REPL supporting `nav`, `click`, `fill`, `type`, `press`, `wait`, `wait-text`, `eval`, `screenshot`, `errors`, `title`, `url`, `quit`. Copy into the project's `.claude/skills/smoke-test/driver.mjs` and adapt selectors per app; the driver itself is app-agnostic.

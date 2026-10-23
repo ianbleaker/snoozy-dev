@@ -1,12 +1,6 @@
 # Preview automation convention (Tier 1)
 
-Generalized GitHub Actions workflow that automates what `/stage-preview`
-already does by hand: merge every open `task/*` branch onto the shared
-`preview` branch and deploy it via the project's existing
-`deploy/preview-deploy.sh` (see `deploy-scripts.md`). **This describes
-stack-agnostic shape, not verbatim commands** — same posture as
-`deploy-scripts.md`; adapt the deploy step per project the same way `ci.yml`
-is adapted per stack.
+Generalized GitHub Actions workflow that automates what `/stage-preview` already does by hand: merge every open `task/*` branch onto the shared `preview` branch and deploy it via the project's existing `deploy/preview-deploy.sh` (see `deploy-scripts.md`). **This describes stack-agnostic shape, not verbatim commands** — same posture as `deploy-scripts.md`; adapt the deploy step per project the same way `ci.yml` is adapted per stack.
 
 ## Trigger
 
@@ -19,14 +13,10 @@ on:
 
 ## Unattended grouping policy
 
-No human in the loop to pick between candidate groups the way
-`/stage-preview` does interactively, so the policy is simpler and stricter:
+No human in the loop to pick between candidate groups the way `/stage-preview` does interactively, so the policy is simpler and stricter:
 - Merge **every** open `task/*` branch onto `preview` in one shot.
-- On any merge conflict, **stop the job immediately**, print exactly which
-  branches conflicted, and do not push — the previous `preview` deploy (and
-  its running service) stays untouched.
-- No auto-exclusion of a conflicting branch. A branch quietly missing from
-  preview is a worse failure mode than a loud, immediate stop.
+- On any merge conflict, **stop the job immediately**, print exactly which branches conflicted, and do not push — the previous `preview` deploy (and its running service) stays untouched.
+- No auto-exclusion of a conflicting branch. A branch quietly missing from preview is a worse failure mode than a loud, immediate stop.
 
 ## Example workflow
 
@@ -84,25 +74,14 @@ jobs:
             -f state="success" -f environment_url="$PREVIEW_URL"
 ```
 
-The SSH-agent setup step and `$PREVIEW_URL` value are per-project detail,
-same as `deploy-scripts.md`'s existing host/path parameterization — not
-fully spelled out here, adapted at onboard-offer time.
+The SSH-agent setup step and `$PREVIEW_URL` value are per-project detail, same as `deploy-scripts.md`'s existing host/path parameterization — not fully spelled out here, adapted at onboard-offer time.
 
-Reporting status via the GitHub Deployments API (rather than a plain issue
-comment) is the point of Tier 1 over the manual skill: it shows up natively
-on the PR (checkmark + environment link) instead of being invisible to
-GitHub.
+Reporting status via the GitHub Deployments API (rather than a plain issue comment) is the point of Tier 1 over the manual skill: it shows up natively on the PR (checkmark + environment link) instead of being invisible to GitHub.
 
 ## Secret convention
 
-`PREVIEW_DEPLOY_SSH_KEY` — a **repo secret**, not org-level (smallest blast
-radius per repo), holding the private key for the preview host's deploy
-user. This is a one-time manual setup step per project — `/onboard`'s offer
-should note it needs to be set before the workflow can succeed, and can't
-verify it was set (secrets aren't readable via API).
+`PREVIEW_DEPLOY_SSH_KEY` — a **repo secret**, not org-level (smallest blast radius per repo), holding the private key for the preview host's deploy user. This is a one-time manual setup step per project — `/onboard`'s offer should note it needs to be set before the workflow can succeed, and can't verify it was set (secrets aren't readable via API).
 
 ## Relationship to `/stage-preview`
 
-Explicitly **additive, not a replacement**. `/stage-preview` stays useful for
-deliberate single-issue staging (its `[issue-number]` fast path) or as a
-fallback if CI is down.
+Explicitly **additive, not a replacement**. `/stage-preview` stays useful for deliberate single-issue staging (its `[issue-number]` fast path) or as a fallback if CI is down.

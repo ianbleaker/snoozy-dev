@@ -1,14 +1,8 @@
 # Task label taxonomy
 
-Task status lives entirely in the `status:*` labels below — no GitHub
-Projects board is read or written. Cross-repo visibility is
-`gh search issues --owner <owner> --label status:ready --state open` (see
-"Status" below).
+Task status lives entirely in the `status:*` labels below — no GitHub Projects board is read or written. Cross-repo visibility is `gh search issues --owner <owner> --label status:ready --state open` (see "Status" below).
 
-Single source of truth for the GitHub Issues label taxonomy used across every
-project onboarded with `/onboard`. `/log-task`, `/next-task`, `/write-plan`,
-`/implement-plan`, `/audit-plan`, and `/onboard` all point here instead of
-repeating the list. Four groups, 12 labels total.
+Single source of truth for the GitHub Issues label taxonomy used across every project onboarded with `/onboard`. `/log-task`, `/next-task`, `/write-plan`, `/implement-plan`, `/audit-plan`, and `/onboard` all point here instead of repeating the list. Four groups, 12 labels total.
 
 ## `type:*` — what kind of work this is
 
@@ -44,25 +38,14 @@ repeating the list. Four groups, 12 labels total.
 
 ## Status
 
-`Draft`, `Ready`, and `Planned` are the `status:*` labels above — the only
-three genuinely human decisions (triage, plan approval). Set/read via `gh
-issue edit --add-label/--remove-label` and `gh issue list --label status:X`.
+`Draft`, `Ready`, and `Planned` are the `status:*` labels above — the only three genuinely human decisions (triage, plan approval). Set/read via `gh issue edit --add-label/--remove-label` and `gh issue list --label status:X`.
 
-**`status:planned` + `status:ready` together is normal, not drift.** The user
-approves a plan by adding `status:ready`; removing `status:planned` at the
-same time is optional. Keeping both is the preferred way to show at a glance
-that a plan exists *and* has been reviewed. Skills never warn about the
-combination, never "fix" it, and treat it exactly like `status:ready` for
-pulling.
+**`status:planned` + `status:ready` together is normal, not drift.** The user approves a plan by adding `status:ready`; removing `status:planned` at the same time is optional. Keeping both is the preferred way to show at a glance that a plan exists *and* has been reviewed. Skills never warn about the combination, never "fix" it, and treat it exactly like `status:ready` for pulling.
 
 `In Review` and `Done` are never stored — they're derived, live-queried:
 
-- **In Review** = an open PR exists on a branch matching
-  `task/<issue-number>-*`: `gh pr list --repo <repo> --state open --json
-  headRefName`, filtered by that prefix.
-- **Done** = the issue's own `state == "closed"`: `gh issue view <NN> --json
-  state`. Set by GitHub's native `Closes #NN` handling on a squash-merged PR
-  — untouched by this taxonomy.
+- **In Review** = an open PR exists on a branch matching `task/<issue-number>-*`: `gh pr list --repo <repo> --state open --json headRefName`, filtered by that prefix.
+- **Done** = the issue's own `state == "closed"`: `gh issue view <NN> --json state`. Set by GitHub's native `Closes #NN` handling on a squash-merged PR — untouched by this taxonomy.
 
 **Cross-repo view.** To see everything in flight across repos:
 
@@ -74,8 +57,7 @@ gh search issues --owner <owner> --label status:ready --state open
 
 ## Dependencies
 
-Ordering beyond priority lives in GitHub's native issue dependencies plus a
-mirrored body block, so it reads the same in the UI and to `/next-task`:
+Ordering beyond priority lives in GitHub's native issue dependencies plus a mirrored body block, so it reads the same in the UI and to `/next-task`:
 
 ```
 ## Dependencies
@@ -88,42 +70,25 @@ Decided: <question> — <answer>   (zero or more; accumulate)
 
 Who writes each line:
 
-- `/log-task` at creation — all lines except `Decided:` (`none` where the
-  caller's context names nothing).
+- `/log-task` at creation — all lines except `Decided:` (`none` where the caller's context names nothing).
 - The user at triage — any line.
-- `/next-task` (after the user answers) and `/write-plan` (when the plan
-  resolves it) — set `Decision needed:` to `none` and append a `Decided:`
-  line.
-- A `/batch-tasks` worker when it bails — writes the blocking question into
-  `Decision needed:`.
+- `/next-task` (after the user answers) and `/write-plan` (when the plan resolves it) — set `Decision needed:` to `none` and append a `Decided:` line.
+- A `/batch-tasks` worker when it bails — writes the blocking question into `Decision needed:`.
 
-The block is required for `/batch-tasks` eligibility: an issue without it is
-ineligible (a missing block means unknown, not safe). `Decided:` lines are
-binding on implementers, like a plan's "Do not do".
+The block is required for `/batch-tasks` eligibility: an issue without it is ineligible (a missing block means unknown, not safe). `Decided:` lines are binding on implementers, like a plan's "Do not do".
 
-Set the native link for every `Blocked by` entry:
-`gh api -X POST repos/<repo>/issues/<NN>/dependencies/blocked_by -F issue_id=<blocker's .id>`
-(the REST `id`, not the issue number). `/next-task` skips issues with an open
-blocker, and ranks an issue below the rest while its `Conflicts with` names an
-issue that has an open `task/*` PR. `/stage-preview` ignores the line: it
-groups by the branches' real diffs, which is more accurate once code exists.
+Set the native link for every `Blocked by` entry: `gh api -X POST repos/<repo>/issues/<NN>/dependencies/blocked_by -F issue_id=<blocker's .id>` (the REST `id`, not the issue number). `/next-task` skips issues with an open blocker, and ranks an issue below the rest while its `Conflicts with` names an issue that has an open `task/*` PR. `/stage-preview` ignores the line: it groups by the branches' real diffs, which is more accurate once code exists.
 
 ## Touches
 
-Every issue body ends with a `## Touches` section after the Dependencies
-block — the repo-relative files the work will change, backticked and
-comma-separated (`unknown` if not known yet):
+Every issue body ends with a `## Touches` section after the Dependencies block — the repo-relative files the work will change, backticked and comma-separated (`unknown` if not known yet):
 
 ```
 ## Touches
 `src/lib/maps.ts`, `src/components/map/ConnectionLayer.tsx`
 ```
 
-`/log-task` writes it at creation; the user corrects it at triage.
-`/batch-tasks` takes it (plus file paths named elsewhere in the body, and
-the plan doc's paths for plan-backed issues) as the predicted footprint for
-its overlap drops, so a missing file means a missed conflict and an extra
-one means a needless drop.
+`/log-task` writes it at creation; the user corrects it at triage. `/batch-tasks` takes it (plus file paths named elsewhere in the body, and the plan doc's paths for plan-backed issues) as the predicted footprint for its overlap drops, so a missing file means a missed conflict and an extra one means a needless drop.
 
 ## `gh label create` invocations
 
