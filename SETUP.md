@@ -71,7 +71,8 @@ What this installs:
 | Piece | Purpose |
 | --- | --- |
 | `global/CLAUDE.md` | Cross-project preferences, kept under 20 lines |
-| `global/settings.snippet.json` | Auto-mode classifier allow-rules (e.g. lets `/sweep-tasks` force-delete a stale local task branch without a confirm prompt) |
+| `global/settings.snippet.json` | Auto-mode classifier allow-rules (e.g. lets `/sweep-tasks` force-delete a stale local task branch without a confirm prompt), plus the global hooks below |
+| `global/hooks/md-unwrap.py` | PostToolUse hook: after any Write/Edit of a `.md` file, joins hard-wrapped prose so each paragraph or list item is one line (Obsidian renders every source newline as a break). Also runnable by hand: `md-unwrap.py [--check] FILE...` |
 | `/write-plan` | Spar over findings one at a time, then write a checklist plan doc |
 | `/implement-plan` | Implement a plan doc in order, in scope, checking items off |
 | `/wrap-up` | End of session: reconcile memory, check doc sync, handoff note |
