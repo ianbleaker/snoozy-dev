@@ -9,14 +9,19 @@ This skill never leaves its backing issue on `status:draft` — in the standalon
 
 ## Precondition
 
-Confirm `docs/plans/` exists before sparring. If it doesn't, this project hasn't been onboarded onto snoozy-dev yet — stop and tell the user to run `/onboard` first (onboard creates `docs/plans/` and `docs/plans/completed/`). Do not fall back to a legacy directory name or guess a location.
+Resolve the plans location before sparring:
+```bash
+eval "$("${CLAUDE_PLUGIN_ROOT}/project-patterns/plans-dir.sh")"
+```
+This sets `PLANS_DIR` and `PLANS_REPO` (absolute paths): `<companion>/plans` and the companion repo when the project's `CLAUDE.md` has a `Private repo:` line, otherwise `docs/plans` and the project itself. If the helper fails (companion folder missing) or `$PLANS_DIR` doesn't exist, this project hasn't been onboarded onto snoozy-dev yet — stop and tell the user to run `/onboard` first (onboard creates `docs/plans/` and `docs/plans/completed/`). Do not fall back to a legacy directory name or guess a location.
 
 ## Phase 1 — Spar
 
 1. Establish the goal and collect the raw material (findings, feature ideas, review output).
 2. Go through the items **one at a time**. For each: state the problem, propose an approach, name the trade-offs, and challenge weak assumptions — including the user's. Use AskUserQuestion for decisions that are genuinely the user's.
 3. Track resolved decisions as you go. An item is resolved when the approach, scope, and acceptance criteria are unambiguous.
-4. Items the user defers accumulate in memory (title + one-line reason), not the checklist. At the end of Phase 1, before Phase 2 writing begins, present them in one `AskUserQuestion` call (multiSelect, one option per candidate). Call `/log-task` for each approved item. The doc's Context section records only `Deferred: logged as #NN - <title>` per approved item — nothing for rejected ones, which are dropped.
+4. Links to mockups, artifacts or brainstorm pages produced while sparring go in the plan's Context, never in the issue (Claude-free rule, `global/CLAUDE.md`). The issue refers to "the plan for #NN".
+5. Items the user defers accumulate in memory (title + one-line reason), not the checklist. At the end of Phase 1, before Phase 2 writing begins, present them in one `AskUserQuestion` call (multiSelect, one option per candidate). Call `/log-task` for each approved item. The doc's Context section records only `Deferred: logged as #NN - <title>` per approved item — nothing for rejected ones, which are dropped.
 
 If the plan's raw material came from a `/next-task` hand-off, the Context section must also include `Source issue: #NN` (the issue `/next-task` handed off) so `implement-plan` knows what to close later.
 
@@ -35,13 +40,23 @@ Either way, the plan doc's Context section records `Source issue: #NN` before Ph
 
 ## Phase 2 — Write the doc
 
-Only after every item is resolved. Location: `docs/plans/` — the only supported location (see Precondition above). Filename: `<issue-number>-<issue-slug-text>.md` (regex: `^[0-9]+-[a-z0-9-]+\.md$`), using the `Source issue: #NN` established in the issue-backing step above. No date component — the issue already carries a creation timestamp on GitHub.
+Only after every item is resolved. Location: `$PLANS_DIR` — the only supported location (see Precondition above). Filename: `<issue-number>-<issue-slug-text>.md` (regex: `^[0-9]+-[a-z0-9-]+\.md$`), using the `Source issue: #NN` established in the issue-backing step above. No date component — the issue already carries a creation timestamp on GitHub.
 
-**This exact format is load-bearing, not a convention.** `/next-task` detects an already-planned issue by testing whether `docs/plans/<issue-number>-*.md` exists; that glob only works reliably if every plan doc is named this way with no variation. Do not fall back to a sequential-number lookup or any other naming scheme.
+**This exact format is load-bearing, not a convention.** `/next-task` detects an already-planned issue by testing whether `$PLANS_DIR/<issue-number>-*.md` exists; that glob only works reliably if every plan doc is named this way with no variation. Do not fall back to a sequential-number lookup or any other naming scheme.
 
-Once implemented (and audited, if `audit-plan` runs), the doc moves to `docs/plans/completed/` — see `implement-plan`/`audit-plan` for when that happens.
+Once implemented (and audited, if `audit-plan` runs), the doc moves to `$PLANS_DIR/completed/` — see `implement-plan`/`audit-plan` for when that happens.
 
-**End of Phase 2, once the doc is written and the checklist is complete:** first, unconditionally reset the local `main` to match the remote — **never assume the session's current branch is already an up-to-date `main`**, even mid-session, even if nothing else seemed to touch branches. This has caused real stale-branch pushes before (committing the plan doc onto a leftover `task/*` branch from earlier work in the same session instead of `main`):
+**End of Phase 2, once the doc is written and the checklist is complete:** commit and push it. Which flow depends on `PLANS_REPO`.
+
+**Companion repo** (`PLANS_REPO` is not the project): the companion holds only docs and config and never takes PRs, so commit straight to its `main` — only the plan file, no confirmation. Don't `checkout -B` there: it would discard unpushed local `CLAUDE.md` commits.
+```bash
+git -C "$PLANS_REPO" pull --rebase --autostash origin main
+git -C "$PLANS_REPO" add plans/<file>.md
+git -C "$PLANS_REPO" commit -m "docs: add plan for #NN <slug>" && git -C "$PLANS_REPO" push
+```
+Then continue with the decision record and relabel below.
+
+**Plans in the project** (`PLANS_REPO` is the project, plans in `docs/plans/`): first, unconditionally reset the local `main` to match the remote — **never assume the session's current branch is already an up-to-date `main`**, even mid-session, even if nothing else seemed to touch branches. This has caused real stale-branch pushes before (committing the plan doc onto a leftover `task/*` branch from earlier work in the same session instead of `main`):
 ```bash
 git fetch origin main && git checkout -B main origin/main
 ```
@@ -53,7 +68,7 @@ gh issue edit <NN> --remove-label status:ready --add-label status:planned
 ```
 This is the *only* place that sets `status:planned` — it signals to the user that a plan now exists and needs their review/approval (approval = the user adding `status:ready` themselves, outside this skill — often keeping `status:planned` alongside it; both labels together means "plan reviewed and approved" and is normal, not something to warn about or clean up).
 
-**Same applies to a revision** (see the revising-an-existing-doc rule above): run the same `git fetch origin main && git checkout -B main origin/main` reset first, then commit and push straight to `main` with no confirmation (`git commit -m "docs: revise plan for #NN <slug>"`). No label change needed if the issue is already `status:planned` (with or without `status:ready` alongside it); if the revision comes in while the issue is `status:ready` *without* `status:planned`, that's a pre-existing-plan-doc edge case out of scope for this plan — flag it as an escalation if hit, don't invent new label-swap logic for it here.
+**Same applies to a revision** (see the revising-an-existing-doc rule above), branching on `PLANS_REPO` the same way. In a companion repo: the same `pull --rebase --autostash`, add only the plan file, commit `docs: revise plan for #NN <slug>` and push. In the project: run the same `git fetch origin main && git checkout -B main origin/main` reset first, then commit and push straight to `main` with no confirmation (`git commit -m "docs: revise plan for #NN <slug>"`). No label change needed if the issue is already `status:planned` (with or without `status:ready` alongside it); if the revision comes in while the issue is `status:ready` *without* `status:planned`, that's a pre-existing-plan-doc edge case out of scope for this plan — flag it as an escalation if hit, don't invent new label-swap logic for it here.
 
 Template — exactly these sections:
 

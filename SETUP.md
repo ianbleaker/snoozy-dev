@@ -59,6 +59,7 @@ What this installs:
 | `global/CLAUDE.md` | Cross-project preferences, kept under 20 lines |
 | `global/settings.snippet.json` | Auto-mode classifier allow-rules (e.g. lets `/sweep-tasks` force-delete a stale local task branch without a confirm prompt), plus the global hooks below |
 | `global/hooks/md-unwrap.py` | PostToolUse hook: after any Write/Edit of a `.md` file, joins hard-wrapped prose so each paragraph or list item is one line (Obsidian renders every source newline as a break). Also runnable by hand: `md-unwrap.py [--check] FILE...` |
+| `global/hooks/claude-free.py` | PreToolUse hook enforcing the Claude-free rule: blocks a `git commit`/`git push`, `gh issue\|pr` create/edit/comment/review/close, `gh api` write or `mcp__github__*` call whose message, title, body or added lines mention Claude (or carry a `Co-Authored-By` trailer or Claude link). Repos with a top-level `.claude-free-exempt` (snoozy-dev, companion repos) are exempt |
 | `/write-plan` | Spar over findings one at a time, then write a checklist plan doc |
 | `/implement-plan` | Implement a plan doc in order, in scope, checking items off |
 | `/wrap-up` | End of session: reconcile memory, check doc sync, handoff note |
@@ -74,6 +75,7 @@ What this installs:
 | `/merge-preview` | After a passing smoke test, squash-merge every open PR whose exact head is on preview, in one confirmed pass |
 | `/sweep-tasks` | Manual backup: sweep stale local `task/*` branches and reconcile any missed issue-close left behind by a merged PR |
 | `/deploy` | SSH-deploy a named project to its production host via that project's `deploy/deploy.sh` |
+| `/go-public` | Publish a private project as a new public repo: plans and Claude config move to a private companion repo with their history, issue/PR text is cleaned, history rewritten, issues transferred keeping their numbers, old repo archived |
 
 If a machine already has a `~/.claude/CLAUDE.md`, merge instead of overwriting.
 

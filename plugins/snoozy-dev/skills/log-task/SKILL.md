@@ -39,7 +39,7 @@ Create one GitHub issue on the current repo's tracker, always landing on `status
 ## Rules
 
 - `status:draft` is set directly in the `gh issue create` call in step 3 — there is no longer a separate step to skip.
-- Issue body is only the summary, `## Dependencies` and `## Touches` — no "Generated with Claude Code" line, session URL, or other attribution footer.
+- Issue body is only the summary, `## Dependencies` and `## Touches` — Claude-free (see `global/CLAUDE.md`; the `claude-free.py` hook enforces it): no mention of Claude or Anthropic, no "Generated with Claude Code" line, session URL or other attribution footer, and no artifact or mockup links. Those links belong in the plan doc; the issue says "see the plan" instead.
 - No cross-issue search to fill the `## Dependencies` lines — use only what the caller's context names; finding relationships is triage's job.
 - Never create more than one issue per call. Batch callers (write-plan's Phase 1 checkpoint, implement-plan's Finish step, audit-plan's report step) call this once per approved item.
 - Don't ask the user to confirm the create itself — that confirmation already happened at the caller's checkpoint (the `AskUserQuestion` multiSelect in write-plan/implement-plan/audit-plan, or the user's direct ask-task request). This skill's job is just to guess labels and file.

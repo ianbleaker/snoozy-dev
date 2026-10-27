@@ -22,10 +22,12 @@ If code changed this session and the project has a doc-sync table (in project CL
 
 `git status` + the project's verify commands (typecheck/lint/tests). Report uncommitted changes and whether verification passes. Do not commit unless asked.
 
+If the project keeps plans in a private companion repo (`eval "$("${CLAUDE_PLUGIN_ROOT}/project-patterns/plans-dir.sh")"` gives a `PLANS_REPO` other than the project), report its state too: `git -C "$PLANS_REPO" status --short` and its unpushed commits (`git -C "$PLANS_REPO" log --oneline @{u}..HEAD`).
+
 ## 4. Handoff
 
 End with exactly this, and nothing verbose around it:
 
 - **Done:** one line on what this session accomplished.
 - **Open:** one line on what's unfinished or awaiting the user (e.g. manual smoke test).
-- **Next:** the exact opening prompt to paste into a fresh session (e.g. `/implement-plan docs/plans/32-foo.md`), or "nothing queued".
+- **Next:** the exact opening prompt to paste into a fresh session (e.g. `/implement-plan <path>`, with the plan's resolved path: `$PLANS_DIR/32-foo.md`), or "nothing queued".

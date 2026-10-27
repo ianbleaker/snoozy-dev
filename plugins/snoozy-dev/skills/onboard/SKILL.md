@@ -158,7 +158,13 @@ Going forward, don't scaffold a per-project "open questions" doc — task captur
 
 ## 6. Create the plan-doc directories
 
-`mkdir -p docs/plans/completed`. If `docs/plans/` doesn't exist yet, this is what makes `write-plan`/`implement-plan`/`audit-plan` usable in this project — without it those skills have nowhere defined to put or find plan docs. Add a `.gitkeep` to `docs/plans/completed/` if it would otherwise be empty and thus unstaged by git. Naturally idempotent — if both directories already exist, this step is a no-op; just confirm and move on.
+**Private companion repo:** if `CLAUDE.md` has a `Private repo: ../<repo>-private` line (set by `/go-public`), skip the `mkdir` below — plans live in the companion. Instead check, and report anything missing (don't create a companion; that's `/go-public`'s job):
+- `<companion>/plans/completed/` exists;
+- `<companion>/.claude-free-exempt` exists;
+- `CLAUDE.md` and `.claude` in the project are symlinks into the companion;
+- `.git/info/exclude` lists both `CLAUDE.md` and `.claude`.
+
+Otherwise: `mkdir -p docs/plans/completed`. If `docs/plans/` doesn't exist yet, this is what makes `write-plan`/`implement-plan`/`audit-plan` usable in this project — without it those skills have nowhere defined to put or find plan docs. Add a `.gitkeep` to `docs/plans/completed/` if it would otherwise be empty and thus unstaged by git. Naturally idempotent — if both directories already exist, this step is a no-op; just confirm and move on.
 
 ## 7. Scaffold project CLAUDE.md (only if absent)
 
@@ -186,6 +192,8 @@ make it a hook instead (see snoozy-dev SETUP.md) and don't list it here.>
 ## Plans
 Plan docs live in `docs/plans/` — written via /write-plan, executed via
 /implement-plan. Completed plans move to `docs/plans/completed/`.
+<Optional: `Private repo: ../<repo>-private` keeps plans in a private companion
+repo's `plans/` instead (set up by /go-public).>
 ```
 
 If CLAUDE.md already exists, don't recreate it — but check its Plans and Doc-sync sections (if present) for drift against the current convention (`docs/plans/`, `docs/plans/completed/`) and flag anything stale for the user rather than silently leaving it.

@@ -8,6 +8,7 @@ Portable Claude Code configuration: the `snoozy-dev` plugin (skills, agents, pro
 ## Invariants
 - Skills live in `plugins/snoozy-dev/skills/<name>/SKILL.md`; helper scripts sit next to the skill that uses them.
 - Never overwrite a user's existing project config from a skill — merge, and ask first.
+- `.claude-free-exempt` at the root marks this repo exempt from the Claude-free rule and its hook: its skills have to name Claude.
 
 ## Pointers
 - Playbook: SETUP.md; install/cloud notes: README.md
@@ -20,4 +21,4 @@ Portable Claude Code configuration: the `snoozy-dev` plugin (skills, agents, pro
 | `scripts/install-plugin.sh` behavior | README.md install steps |
 
 ## Plans
-Plan docs live in `docs/plans/` — written via /write-plan, executed via /implement-plan. Completed plans move to `docs/plans/completed/`.
+Plan docs live in `docs/plans/` — written via /write-plan, executed via /implement-plan. Completed plans move to `docs/plans/completed/`. A project may instead keep them in a private companion repo with a `Private repo: ../<repo>-private` line here (resolved by `plugins/snoozy-dev/project-patterns/plans-dir.sh`; not used for this repo).
