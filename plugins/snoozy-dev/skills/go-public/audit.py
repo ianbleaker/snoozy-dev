@@ -15,6 +15,8 @@ import sys
 from collections import defaultdict
 
 PAT = re.compile(r"\b(claude|anthropic)\b|co-authored-by|claude\.(ai|com)/", re.I)
+# The user's own README credit line ("assisted by ... Claude by Anthropic") is allowed.
+CREDIT = re.compile(r"\bassisted by\b", re.I)
 
 
 def run(*a, cwd=None, inp=None):
@@ -59,7 +61,11 @@ def scan_history(src, work):
             continue
         text = data.decode("utf-8", "replace")
         for m in PAT.finditer(text):
+            end = text.find("\n", m.end())
+            line = text[text.rfind("\n", 0, m.start()) + 1:end if end >= 0 else None]
             for p in paths[sha]:
+                if p.rsplit("/", 1)[-1] == "README.md" and CREDIT.search(line):
+                    continue
                 hits[p].add(snip(text, m).strip())
     for p in sorted(hits):
         print(f"  {p}  ({len(hits[p])} distinct)")
