@@ -48,7 +48,7 @@ digraph brainstorming {
 }
 ```
 
-**The terminal state is invoking write-plan.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill, and do NOT write a design/spec doc as an intermediate artifact. The ONLY skill you invoke after brainstorming is write-plan — the design approved in dialogue is handed to it directly.
+**The terminal state is invoking write-plan.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill, and do NOT write a design/spec doc as an intermediate artifact. The ONLY skill you invoke after brainstorming is write-plan — the design approved in dialogue is handed to it directly. Hand any mockup or artifact links produced while brainstorming to write-plan for the plan's Context; never put them in issues (Claude-free rule, `global/CLAUDE.md`).
 
 ## The Process
 

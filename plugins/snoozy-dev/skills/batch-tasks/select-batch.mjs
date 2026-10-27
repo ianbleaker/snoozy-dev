@@ -17,6 +17,7 @@
 import { execFileSync, execFile } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 
 const execFileP = promisify(execFile);
 const sh = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 << 20 });
@@ -36,6 +37,26 @@ const repo = sh('git', ['remote', 'get-url', 'origin']).trim().replace(/.*[:/]([
 sh('git', ['fetch', 'origin', 'main', '--quiet']);
 const mainFiles = sh('git', ['ls-tree', '-r', '--name-only', 'origin/main']).split('\n').filter(Boolean);
 const fileSet = new Set(mainFiles);
+// Plans live in a private companion repo when CLAUDE.md has a `Private repo:`
+// line (see project-patterns/plans-dir.sh), otherwise in docs/plans/ on main.
+const plansEnv = Object.fromEntries(sh(fileURLToPath(new URL('../../project-patterns/plans-dir.sh', import.meta.url)), [])
+  .trim().split('\n').map((l) => l.split(/=(.*)/s).slice(0, 2)).map(([k, v]) => [k, v.replace(/\\(.)/g, '$1')]));
+const { PLANS_REPO: plansRepo, PLANS_DIR: plansDir } = plansEnv;
+const companion = plansDir !== `${plansRepo}/docs/plans`;
+let companionFiles = [];
+if (companion) {
+  sh('git', ['-C', plansRepo, 'fetch', '-q', 'origin', 'main']);
+  companionFiles = sh('git', ['-C', plansRepo, 'ls-tree', '-r', '--name-only', 'origin/main']).split('\n').filter(Boolean);
+}
+// Plan doc for issue n: { path to report, git -C repo, ref path on origin/main }.
+function findPlan(n) {
+  if (companion) {
+    const f = companionFiles.find((x) => x.startsWith(`plans/${n}-`) && x.endsWith('.md') && !x.includes('/completed/'));
+    return f && { path: `${plansDir}/${f.slice('plans/'.length)}`, repo: plansRepo, ref: f };
+  }
+  const f = mainFiles.find((x) => x.startsWith(`docs/plans/${n}-`) && x.endsWith('.md'));
+  return f && { path: f, repo: '.', ref: f };
+}
 const byBase = new Map();
 for (const f of mainFiles) {
   const b = f.split('/').pop();
@@ -94,9 +115,11 @@ const checks = ready.map(async (issue) => {
   if (!d) return why('no ## Dependencies block');
   if (!/^none\b/i.test(d.decision)) return why(`decision needed: ${d.decision}`);
   let plan = 'none';
+  let planRef = null;
   if (size !== 'small') {
-    plan = mainFiles.find((f) => f.startsWith(`docs/plans/${n}-`) && f.endsWith('.md'));
-    if (!plan) return why(`size:${size ?? '?'} without docs/plans/${n}-*.md`);
+    planRef = findPlan(n);
+    if (!planRef) return why(`size:${size ?? '?'} without ${companion ? `${plansDir}/` : 'docs/plans/'}${n}-*.md`);
+    plan = planRef.path;
   }
   const conflictsInReview = d.conflicts.filter((c) => inReview.has(c));
   if (conflictsInReview.length) return why(`conflicts with in-review ${conflictsInReview.map((c) => '#' + c).join(', ')}`);
@@ -113,7 +136,7 @@ const checks = ready.map(async (issue) => {
   const fp = new Set();
   const src = [];
   if (plan !== 'none') {
-    pathsIn(sh('git', ['show', `origin/main:${plan}`]), true).forEach((p) => fp.add(p));
+    pathsIn(sh('git', ['-C', planRef.repo, 'show', `origin/main:${planRef.ref}`]), true).forEach((p) => fp.add(p));
     src.push('plan');
   }
   if (touches) { pathsIn(touches, true).forEach((p) => fp.add(p)); src.push('touches'); }
