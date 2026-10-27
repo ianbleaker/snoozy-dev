@@ -35,6 +35,8 @@ def joinable_head(line):
         return False
     if s.startswith(("#", "|", "<")) or re.match(r"^(---|\*\*\*|___)\s*$", s):
         return False
+    if re.match(r"^\[![A-Za-z]+\]\s*$", s):
+        return False  # GitHub alert marker (> [!NOTE]): its body must stay on the next line
     if line.endswith("  ") or line.rstrip().endswith("\\"):
         return False  # explicit Markdown hard break
     return True
