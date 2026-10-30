@@ -22,7 +22,7 @@ The spawning prompt gives you:
 You run in a fresh worktree with no dependencies installed. Start with (each its own Bash call — see Rules):
 
 1. `git fetch origin main`
-2. `git checkout -B task/<N>-<slug> origin/main` (never the worktree's current branch). This is `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` Start: a fresh worktree on an eligible ticket has no existing branch to resume.
+2. `git checkout -B task/<N>-<slug> --no-track origin/main` (never the worktree's current branch). This is `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` Start: `/batch-tasks` only hands out tickets with no `task/<N>-*` branch on origin, so there is nothing to resume.
 3. Install: `npm ci` in every directory holding a tracked `package-lock.json` (root first; list them with `git ls-files '*package-lock.json'`) — a nested package such as a server subfolder has its own deps, and its tests fail without them; otherwise the install command from the project's CLAUDE.md. If neither applies, skip.
 
 ## Route

@@ -12,10 +12,11 @@ Every task that changes tracked files — a GitHub issue, a plan doc, or a direc
 1. `git status --short`. Uncommitted changes that aren't this task's → stop and ask.
 2. `git fetch origin`.
 3. Pick the base, in this order — never whatever branch happens to be checked out:
-   - Local `<branch>` exists with a live upstream (a resume or a follow-up) → `git checkout <branch>`, then `git pull --ff-only`.
-   - Only `origin/<branch>` exists → `git checkout -B <branch> origin/<branch>`.
-   - Neither → `git checkout -B <branch> origin/main`.
+   - Local `<branch>` tracking a live `origin/<branch>` (a resume or a follow-up) → `git checkout <branch>`, then `git pull --ff-only`.
+   - Local `<branch>` with no upstream, or one other than `origin/<branch>` (never pushed) → `git checkout <branch>`, keep its commits, `git push -u origin <branch>`.
    - Local `<branch>` whose upstream is `gone` is a merged leftover, not this task → pick a new slug.
+   - Only `origin/<branch>` exists → `git checkout -b <branch> --track origin/<branch>`.
+   - Neither → `git checkout -b <branch> --no-track origin/main`. `--no-track` matters: tracking `origin/main` would make a later bare `git pull`/`git push` hit `main`.
 
 Running Start again mid-task is safe: it lands on the existing branch with its commits.
 
