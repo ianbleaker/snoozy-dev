@@ -9,7 +9,7 @@ The user's report **is** the reproduction — trust it; never start a dev server
 
 1. **Restate** observed vs expected behavior, one line each. If the report lacks either, ask now — one round of questions, never mid-fix.
 2. **Root-cause from the code.** Trace the path with targeted reads and greps; state the cause with evidence (`file.ts:123` + the reasoning) *before* editing. Two live hypotheses → distinguish by reading or a unit-level probe, not at runtime. No cause found → report what was ruled out; do not patch symptoms.
-3. **Fix the cause, minimally.** No drive-by refactors in the same diff.
+3. **Fix the cause, minimally.** Branch first, per `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` Start: on the branch of the open PR the bug belongs to (a follow-up — e.g. a preview failure from `/stage-preview`), otherwise `task/<N>-<slug>` for an issue or `fix/<slug>`. No drive-by refactors in the same diff.
 4. **Regression test, when cheap.** If the bug is logic-level and a test file or harness already covers the area, add a test that fails pre-fix (state that you confirmed it fails). If it would need new scaffolding, skip it and say so — don't build test infrastructure inside a bug fix.
 5. **Sibling check.** Grep for the same pattern elsewhere. Identical and trivial → fix in the same diff and say so; otherwise list the locations for the user.
-6. **Verify with evidence** — typecheck/lint/test output included — then hand back for the user's manual smoke test. Commit only if asked.
+6. **Verify with evidence** — typecheck/lint/test output included — then commit and push the fix. Open the PR if the branch has none yet (branch-workflow "PR"), and hand back for the user's manual smoke test.
