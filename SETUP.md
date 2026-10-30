@@ -73,7 +73,7 @@ What this installs:
 | `plugins/snoozy-dev/agents/task-worker.md` | Worker agent spawned by `/batch-tasks` to implement one ticket in its own worktree; not invoked directly |
 | `/stage-preview` | Rebuild the disposable `preview` environment from a group of non-conflicting in-review task branches and deploy it, then sense-check it (reachable, no console errors, project `Preview check:` passes) before smoke testing |
 | `/merge-preview` | After a passing smoke test, squash-merge every open PR whose exact head is on preview, in one confirmed pass |
-| `/sweep-tasks` | Manual backup: sweep stale local `task/*` branches and reconcile any missed issue-close left behind by a merged PR |
+| `/sweep-tasks` | Manual backup: sweep stale local `task/*` and ad hoc branches and reconcile any missed issue-close left behind by a merged PR |
 | `/deploy` | SSH-deploy a named project to its production host via that project's `deploy/deploy.sh` |
 | `/go-public` | Publish a private project as a new public repo: plans and Claude config move to a private companion repo with their history, issue/PR text is cleaned, history rewritten, issues transferred keeping their numbers, old repo archived |
 
@@ -145,6 +145,7 @@ These can't be installed; they're how you use the tool.
 - **Broad scans** ("find every place that does X") → ask for the **Explore subagent** so file dumps stay out of the main context and you pay only for conclusions.
 - **End significant sessions with `/wrap-up`** so memory stays a lean index instead of an append-only log.
 - **Task capture and pull.** Capture ad hoc via GitHub's mobile app/web or `/log-task`. Triage `type:*`/`priority:*`/`size:*` and `status:*` labels (see [`plugins/snoozy-dev/project-patterns/task-labels.md`](plugins/snoozy-dev/project-patterns/task-labels.md)) when at a desktop. When an issue is labeled `status:planned` (meaning `/write-plan` finished a doc for it), review the plan doc and add `status:ready` to approve (keeping `status:planned` alongside it is normal — it marks the plan as reviewed at a glance). Pull work in via `/next-task` at the start of a session. `/batch-tasks` pulls several eligible ready items at once, then offers to stage them for one smoke test.
+- **Branch per task.** Every change — issue or chat request — gets its own branch, a commit per plan step, and one PR opened automatically when the work is done; later changes land as follow-up commits on that PR. See [`plugins/snoozy-dev/project-patterns/branch-workflow.md`](plugins/snoozy-dev/project-patterns/branch-workflow.md).
 - **Don't paste large logs or files into chat** — save to a file and give Claude the path; it will read the parts it needs.
 - **Escalation rule:** the second time you correct Claude about the same thing, stop and encode it — hook if mechanical, skill if workflow, CLAUDE.md line if preference — and commit it to this repo.
 

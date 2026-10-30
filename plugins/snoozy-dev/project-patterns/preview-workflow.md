@@ -1,6 +1,6 @@
 # Preview automation convention (Tier 1)
 
-Generalized GitHub Actions workflow that automates what `/stage-preview` already does by hand: merge every open `task/*` branch onto the shared `preview` branch and deploy it via the project's existing `deploy/preview-deploy.sh` (see `deploy-scripts.md`). **This describes stack-agnostic shape, not verbatim commands** — same posture as `deploy-scripts.md`; adapt the deploy step per project the same way `ci.yml` is adapted per stack.
+Generalized GitHub Actions workflow that automates what `/stage-preview` already does by hand: merge every open-PR `task/*` and ad hoc branch onto the shared `preview` branch and deploy it via the project's existing `deploy/preview-deploy.sh` (see `deploy-scripts.md`). **This describes stack-agnostic shape, not verbatim commands** — same posture as `deploy-scripts.md`; adapt the deploy step per project the same way `ci.yml` is adapted per stack.
 
 ## Trigger
 
@@ -14,7 +14,7 @@ on:
 ## Unattended grouping policy
 
 No human in the loop to pick between candidate groups the way `/stage-preview` does interactively, so the policy is simpler and stricter:
-- Merge **every** open `task/*` branch onto `preview` in one shot.
+- Merge **every** open-PR `task/*` or ad hoc `<type>/*` branch (`branch-workflow.md`) onto `preview` in one shot.
 - On any merge conflict, **stop the job immediately**, print exactly which branches conflicted, and do not push — the previous `preview` deploy (and its running service) stays untouched.
 - No auto-exclusion of a conflicting branch. A branch quietly missing from preview is a worse failure mode than a loud, immediate stop.
 
@@ -45,7 +45,7 @@ jobs:
         run: |
           set -euo pipefail
           branches=$(gh pr list --repo "${{ github.repository }}" --state open \
-            --json headRefName --jq '.[].headRefName' | grep -E '^task/' || true)
+            --json headRefName --jq '.[].headRefName' | grep -E '^(task|feat|fix|refactor|docs|chore|security)/' || true)
           git checkout -B preview origin/main
           for b in $branches; do
             if ! git merge --no-edit "origin/$b"; then

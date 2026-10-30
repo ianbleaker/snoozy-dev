@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Sweep stale local task/* branches and reconcile any issue-close drift left
-# behind by a merged PR. No project-specific content — see
+# Sweep stale local task/* and ad hoc <type>/* branches (see
+# project-patterns/branch-workflow.md) and reconcile any issue-close drift
+# left behind by a merged task PR. No project-specific content — see
 # plugins/snoozy-dev/skills/sweep-tasks/SKILL.md for the skill that drives this.
 #
 # Usage:
 #   sweep.sh   # no args
 #
 # Prints its own final summary: branches swept, issues reconciled, anything
-# unreconciled, or "nothing to sweep" if no gone-upstream task/* branches
-# exist.
+# unreconciled, or "nothing to sweep" if no gone-upstream task/* or ad hoc
+# branches exist.
 
 set -euo pipefail
 
@@ -16,7 +17,7 @@ REPO="$(git remote get-url origin | sed -E 's#.*[:/]([^/]+/[^/.]+)(\.git)?$#\1#'
 
 git fetch --prune --quiet
 
-stale_branches="$(git branch -vv | awk '/: gone\]/ {print $1}' | grep -E '^task/' || true)"
+stale_branches="$(git branch -vv | awk '/: gone\]/ {print $1}' | grep -E '^(task|feat|fix|refactor|docs|chore|security)/' || true)"
 
 if [[ -z "$stale_branches" ]]; then
   echo "nothing to sweep"
@@ -29,6 +30,12 @@ swept=()
 
 while IFS= read -r branch; do
   [[ -z "$branch" ]] && continue
+  # Ad hoc branches have no issue to reconcile.
+  if [[ ! "$branch" =~ ^task/ ]]; then
+    git branch -D "$branch" >/dev/null
+    swept+=("$branch")
+    continue
+  fi
   issue="$(echo "$branch" | sed -E 's#^task/([0-9]+)-.*#\1#')"
 
   merged_pr="$(gh pr list --repo "$REPO" --state merged \

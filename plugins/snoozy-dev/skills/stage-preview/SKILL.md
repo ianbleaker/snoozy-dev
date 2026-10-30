@@ -9,7 +9,7 @@ Stage one or more in-review task branches onto the shared, disposable `preview` 
 
 1. **Determine the repo.** `git remote get-url origin` (same as `/log-task`).
 
-2. **Compute groups.** Run `${CLAUDE_PLUGIN_ROOT}/skills/stage-preview/group-branches.sh [issue-number...]` — pass the issue-number argument(s) through unchanged if the caller gave any. With no args the script discovers candidates from open PRs on `task/*` branches (`gh pr list --state open`), not a board Status field.
+2. **Compute groups.** Run `${CLAUDE_PLUGIN_ROOT}/skills/stage-preview/group-branches.sh [issue-number...]` — pass the issue-number argument(s) through unchanged if the caller gave any. With no args the script discovers candidates from open PRs on `task/*` and ad hoc `<type>/*` branches (`gh pr list --state open`; prefixes in `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md`), not a board Status field.
    - **With one issue-number arg:** the script prints a single-branch group. Skip straight to step 3 with that one branch.
    - **With 2+ issue-number args:** the script groups only those issues' branches. One group → stage it. Multiple groups → pick the one with the most branches (tie → first printed) **without asking**, and report every left-out branch by name.
    - **No arg, one group returned:** stage it, no need to ask.

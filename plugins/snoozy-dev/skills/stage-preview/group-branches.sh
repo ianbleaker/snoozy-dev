@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Bucket the current repo's In Review task branches into the largest
+# Bucket the current repo's open-PR branches (task/* and ad hoc) into the largest
 # groups where no two branches in a group touch the same file. Bash script,
 # no project-specific content — see plugins/snoozy-dev/skills/stage-preview/SKILL.md for
 # the skill that drives this.
 #
 # Usage:
-#   group-branches.sh              # group all In Review issues
+#   group-branches.sh              # group every open task/* and ad hoc PR branch
 #   group-branches.sh <issue-num>  # bypass grouping, print just that branch
 #   group-branches.sh <n1> <n2> ...  # group only these issues' branches
 #
@@ -37,24 +37,27 @@ if [[ $# -eq 1 ]]; then
   exit 0
 fi
 
+branches=()
 if [[ $# -ge 2 ]]; then
   issue_numbers=$(printf '%s\n' "$@" | tr -d '#')
+  while IFS= read -r issue; do
+    [[ -z "$issue" ]] && continue
+    branch="$(resolve_branch "$issue")"
+    if [[ -z "$branch" ]]; then
+      echo "Warning: no branch found for issue #${issue} (expected task/${issue}-*), skipping." >&2
+      continue
+    fi
+    branches+=("$branch")
+  done <<< "$issue_numbers"
 else
-  issue_numbers=$(gh pr list --repo "$REPO" --state open \
+  # Every open PR on a task/* or ad hoc <type>/* branch
+  # (project-patterns/branch-workflow.md).
+  while IFS= read -r branch; do
+    [[ -n "$branch" ]] && branches+=("$branch")
+  done < <(gh pr list --repo "$REPO" --state open \
     --json headRefName --jq '.[].headRefName' \
-    | { grep -oE '^task/[0-9]+' || true; } | { grep -oE '[0-9]+' || true; } | sort -un)
+    | { grep -E '^(task|feat|fix|refactor|docs|chore|security)/' || true; } | sort -u)
 fi
-
-branches=()
-while IFS= read -r issue; do
-  [[ -z "$issue" ]] && continue
-  branch="$(resolve_branch "$issue")"
-  if [[ -z "$branch" ]]; then
-    echo "Warning: no branch found for issue #${issue} (expected task/${issue}-*), skipping." >&2
-    continue
-  fi
-  branches+=("$branch")
-done <<< "$issue_numbers"
 
 if [[ ${#branches[@]} -eq 0 ]]; then
   exit 0

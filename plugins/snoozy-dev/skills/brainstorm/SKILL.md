@@ -26,7 +26,7 @@ You MUST create a task for each of these items and complete them in order:
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Transition to implementation** — invoke the write-plan skill directly; the approved design lives in the conversation, not in a separate doc
+6. **Transition to implementation** — small work (a few steps, one session): present a numbered step list, and once it's approved, implement it per `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` (branch, one commit per step, PR at the end). Anything bigger: invoke the write-plan skill directly. Either way, the approved design lives in the conversation, not in a separate doc
 
 ## Process Flow
 
@@ -37,6 +37,8 @@ digraph brainstorming {
     "Propose 2-3 approaches" [shape=box];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
+    "Small?" [shape=diamond];
+    "Approved step list → branch-workflow" [shape=doublecircle];
     "Invoke write-plan skill" [shape=doublecircle];
 
     "Explore project context" -> "Ask clarifying questions";
@@ -44,11 +46,13 @@ digraph brainstorming {
     "Propose 2-3 approaches" -> "Present design sections";
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "Invoke write-plan skill" [label="yes"];
+    "User approves design?" -> "Small?" [label="yes"];
+    "Small?" -> "Approved step list → branch-workflow" [label="yes"];
+    "Small?" -> "Invoke write-plan skill" [label="no"];
 }
 ```
 
-**The terminal state is invoking write-plan.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill, and do NOT write a design/spec doc as an intermediate artifact. The ONLY skill you invoke after brainstorming is write-plan — the design approved in dialogue is handed to it directly. Hand any mockup or artifact links produced while brainstorming to write-plan for the plan's Context; never put them in issues (Claude-free rule, `global/CLAUDE.md`).
+**There are two terminal states.** For small work, implement the approved step list directly on a branch: one commit per step, PR at the end. For anything else, invoke write-plan. Do NOT invoke frontend-design, mcp-builder, or any other implementation skill, and do NOT write a design/spec doc as an intermediate artifact. The only skill you invoke after brainstorming is write-plan — the design approved in dialogue is handed to it directly. Hand any mockup or artifact links produced while brainstorming to write-plan for the plan's Context; never put them in issues (Claude-free rule, `global/CLAUDE.md`).
 
 ## The Process
 
@@ -95,8 +99,9 @@ digraph brainstorming {
 
 **Implementation:**
 
-- Invoke the write-plan skill immediately once the last design section is approved. Hand it the resolved decisions from the conversation (what was built, why, the trade-offs picked) as the raw material for Phase 1 — write-plan should treat these as settled, not re-open them, and focus its own sparring on implementation breakdown and sequencing.
-- Do NOT invoke any other skill. write-plan is the next step.
+- Small work: once the last design section is approved, present the numbered step list for approval, then implement it per `branch-workflow.md`. That approved list is the plan.
+- Anything bigger: invoke the write-plan skill immediately once the last design section is approved. Hand it the resolved decisions from the conversation (what was built, why, the trade-offs picked) as the raw material for Phase 1 — write-plan should treat these as settled, not re-open them, and focus its own sparring on implementation breakdown and sequencing.
+- Do NOT invoke any other skill.
 
 ## Key Principles
 
