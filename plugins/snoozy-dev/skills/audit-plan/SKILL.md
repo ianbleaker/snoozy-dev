@@ -24,7 +24,7 @@ Audit what an executor session did against what the plan doc said. You are the q
    suggestions.
 
    Append the `## Audit <date>` section to the doc: verdict (conforming / deviations found), each finding labeled **blocking** or **trade-off**, new unchecked items for anything that must be fixed, and the `Logged: #NN -
-   <title>` lines from the checkpoint above. When `PLANS_REPO` is a private companion repo, the audit section and any move (`git -C "$PLANS_REPO" mv plans/<f> plans/completed/<f>`) are committed and pushed straight to the companion's `main` (`pull --rebase --autostash` first, only the plan file), never part of the project's diff. If the verdict is conforming
+   <title>` lines from the checkpoint above. When `PLANS_REPO` is a private companion repo, the audit section and any move (`git -C "$PLANS_REPO" mv plans/<f> plans/completed/<f>`) are committed and pushed straight to the companion's `main` (`pull --rebase --autostash` first, only the plan file), never part of the project's diff. Plans in the project: commit on the plan's branch as a follow-up while its PR is open (`${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` Start, then commit and push); once that PR has merged, on a new `docs/<slug>-audit` branch with its own PR — never on `main`. If the verdict is conforming
    with no new checklist items, move the doc into `$PLANS_DIR/completed/` (`git mv`) as part of that commit — unless it's already there (see step 2), in which case just append the audit section in place, no move needed. Then summarize for the user, ending with the exact next prompt — `/implement-plan <path>` to work the new items, or "ready for your manual smoke test".
 
 ## Rules
