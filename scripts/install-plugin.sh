@@ -10,11 +10,21 @@ DIR="${SNOOZY_DEV_DIR:-$HOME/snoozy-dev}"
 URL="https://github.com/ianbleaker/snoozy-dev.git"
 
 if [[ -d "$DIR/.git" ]]; then
-  git -C "$DIR" pull --ff-only -q
+  # A local checkout may sit on a task branch (branch-workflow.md); only main
+  # tracks anything worth pulling.
+  branch="$(git -C "$DIR" branch --show-current)"
+  if [[ "$branch" == main ]]; then
+    git -C "$DIR" pull --ff-only -q
+  else
+    echo "Note: $DIR is on $branch — installing that branch's unmerged skills." >&2
+  fi
 else
   git clone -q --depth 1 "$URL" "$DIR"
 fi
 
 claude plugin marketplace add "$DIR" >/dev/null 2>&1 || claude plugin marketplace update snoozy-dev
-claude plugin install snoozy-dev@snoozy-dev >/dev/null 2>&1 || claude plugin update snoozy-dev@snoozy-dev
+# install succeeds as a no-op when the plugin is already installed, so update
+# must run unconditionally or a re-run never picks up a new version.
+claude plugin install snoozy-dev@snoozy-dev >/dev/null 2>&1 || true
+claude plugin update snoozy-dev@snoozy-dev
 echo "snoozy-dev plugin installed from $DIR"
