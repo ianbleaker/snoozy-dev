@@ -128,14 +128,11 @@ Skip silently if there's no GitHub remote. If CI already exists, don't just ask 
 
 Once `ci.yml` exists and has run at least once on the repo (so its check name is known — **do not guess the check name**; fetch it via `gh api repos/<owner>/<repo>/commits/<sha>/check-runs --jq '.check_runs[].name'` against the most recent commit that ran CI), set branch protection on `main` so a red run actually blocks merge (`ci.yml` alone doesn't — it just runs):
 ```bash
-gh api --method PUT repos/<owner>/<repo>/branches/main/protection \
-  -f required_status_checks.strict=true \
-  -f 'required_status_checks.contexts[]=<exact check name from above>' \
-  -F enforce_admins=true \
-  -f required_pull_request_reviews='null' \
-  -F allow_force_pushes=false \
-  -F allow_deletions=false
+echo '{"required_status_checks":{"strict":false,"contexts":["<exact check name from above>"]},"enforce_admins":true,"required_pull_request_reviews":null,"restrictions":null,"allow_force_pushes":false,"allow_deletions":false}' \
+  | gh api --method PUT repos/<owner>/<repo>/branches/main/protection --input -
 ```
+JSON via `--input` because `gh api -f` neither nests dotted keys nor sends a real `null`. `strict` stays `false`: "up to date before merging" blocks every staged PR after the first one `/merge-preview` merges, and it never updates a branch to get past that. Skip protection when plans live in the project (`docs/plans/`, no `Private repo:` line): `/write-plan` pushes plan docs straight to `main`, and a required check would reject them. Private repos on the free plan can't use protection at all.
+
 Same "confirm with the user before mutating a live repo" guard as the other repo-mutation commands in this section. If `ci.yml` was just created in this same onboard run (no commit has triggered it yet), note that this step must wait for the first PR/push to run CI once, and either come back to it or ask the user to re-run this step after that happens — don't block the rest of onboarding on it.
 
 ## 5. Bootstrap task tracking
