@@ -8,7 +8,11 @@ import os from 'node:os'
 import path from 'node:path'
 
 for (const k of Object.keys(process.env)) if (k.startsWith('GIT_')) delete process.env[k]
+// Every temp dir this process creates is removed when it exits.
+const created = []
+process.on('exit', () => { for (const d of created) fs.rmSync(d, { recursive: true, force: true }) })
 const cfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doc-changelog-gitcfg-'))
+created.push(cfgDir)
 const cfgFile = path.join(cfgDir, 'gitconfig')
 fs.writeFileSync(cfgFile, '[user]\n\tname = t\n\temail = t@t\n[commit]\n\tgpgsign = false\n[tag]\n\tgpgsign = false\n[init]\n\tdefaultBranch = main\n')
 process.env.GIT_CONFIG_GLOBAL = cfgFile
@@ -16,7 +20,11 @@ process.env.GIT_CONFIG_NOSYSTEM = '1'
 
 export const HERE = path.dirname(new URL(import.meta.url).pathname)
 
-export const tmpDir = (prefix = 'doc-changelog-') => fs.mkdtempSync(path.join(os.tmpdir(), prefix))
+export const tmpDir = (prefix = 'doc-changelog-') => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), prefix))
+  created.push(d)
+  return d
+}
 
 let clock = Date.UTC(2026, 0, 1) / 1000
 
