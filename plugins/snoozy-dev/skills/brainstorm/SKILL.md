@@ -22,7 +22,7 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits
-2. **Offer the visual companion just-in-time** — NOT upfront. The first time a question would genuinely be clearer shown than described, offer it then (its own message); on approval its browser tab opens for you. If no visual question ever arises, never offer it. See the Visual Companion section below.
+2. **Offer the visual companion just-in-time** — NOT upfront. The first time a question would genuinely be clearer shown than described, offer it then (its own message); on approval, show the first visual (an Artifact page, or a local HTML page opened in their browser). If no visual question ever arises, never offer it. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
@@ -119,7 +119,7 @@ A browser-based companion for showing mockups, diagrams, and visual options duri
 **Offering the companion (just-in-time):** Do NOT offer it upfront. Wait until a question would genuinely be clearer shown than told — a real mockup / layout / diagram question, not merely a UI *topic*. The first time that happens, offer it then, as its own message:
 > "This next part might be easier if I show you — I can put together mockups, diagrams, and comparisons in a browser tab as we go. It's still new and can be token-intensive. Want me to? I'll open it for you."
 
-**This offer MUST be its own message.** Only the offer — no clarifying question, summary, or other content. Wait for the user's response. If they accept, start the server with `--open` so their browser opens to the first screen automatically. If they decline, continue text-only and don't offer again unless they raise it.
+**This offer MUST be its own message.** Only the offer — no clarifying question, summary, or other content. Wait for the user's response. If they accept, show the first visual right away (see "Showing a visual" below). If they decline, continue text-only and don't offer again unless they raise it.
 
 **Per-question decision:** Even after the user accepts, decide FOR EACH QUESTION whether to use the browser or the terminal. The test: **would the user understand this better by seeing it than reading it?**
 
@@ -128,4 +128,9 @@ A browser-based companion for showing mockups, diagrams, and visual options duri
 
 A question about a UI topic is not automatically a visual question. "What does personality mean in this context?" is a conceptual question — use the terminal. "Which wizard layout works better?" is a visual question — use the browser.
 
-If they agree to the companion, read the detailed guide before proceeding: `skills/brainstorming/visual-companion.md`
+**Showing a visual:** No server and no separate guide are needed. Each visual is one self-contained HTML page with inline CSS/SVG and no build step. Put the options side by side on one page and label them A/B/C so the user can answer in the terminal.
+
+1. **Artifact tool available** → write the page to the scratchpad and publish it as a private Artifact (load `artifact-design` first, as the tool requires). Republish the same file path for each revision so the URL stays the same, and give the link in the terminal. It also works from the user's phone.
+2. **Otherwise** → write the page to the scratchpad (e.g. `<scratchpad>/brainstorm/<topic>-<n>.html`) and run `open <path>`. Use a new file for each question so earlier screens stay available to compare.
+
+Keep asking the question itself in the terminal; the page only illustrates it. Artifact or mockup links go in the plan doc's Context when write-plan runs, never in issues (Claude-free rule).
