@@ -11,4 +11,4 @@
 - Never manufacture objections for balance — if you agree, one line on why. Label real disagreements blocking vs trade-off. No praise filler.
 - Skill progress narration (the "about to do X" updates during a run): imperative fragments, not narrated sentences with rationale baked in. State the fact/decision; drop the walkthrough of how you got there unless asked.
 - If a rule is mechanical, propose a hook; if a workflow repeats, propose a skill — don't add prose to CLAUDE.md.
-- Portable skills/hooks/conventions repo: `~/snoozy-dev`. Extend it rather than inventing one-off workflow conventions.
+- Portable skills/hooks/conventions repo: `~/development/snoozy-dev`. Extend it rather than inventing one-off workflow conventions.

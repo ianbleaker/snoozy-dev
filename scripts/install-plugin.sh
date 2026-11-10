@@ -6,7 +6,15 @@
 # Idempotent: re-running updates the checkout and plugin.
 set -euo pipefail
 
-DIR="${SNOOZY_DEV_DIR:-$HOME/snoozy-dev}"
+# Default to the checkout this script runs from, so any clone location works;
+# with no checkout around it (e.g. piped from curl), the standard location.
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-.}")/.." 2>/dev/null && pwd || true)"
+if [[ -n "$ROOT" && -d "$ROOT/.git" ]]; then
+  DEFAULT_DIR="$ROOT"
+else
+  DEFAULT_DIR="$HOME/development/snoozy-dev"
+fi
+DIR="${SNOOZY_DEV_DIR:-$DEFAULT_DIR}"
 URL="https://github.com/ianbleaker/snoozy-dev.git"
 
 if [[ -d "$DIR/.git" ]]; then
