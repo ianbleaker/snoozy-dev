@@ -22,7 +22,7 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits
-2. **Offer the visual companion just-in-time** — NOT upfront. The first time a question would genuinely be clearer shown than described, offer it then (its own message); on approval, show the first visual (an Artifact page, or a local HTML page opened in their browser). If no visual question ever arises, never offer it. See the Visual Companion section below.
+2. **Offer the visual companion just-in-time** — NOT upfront. The first time a question would genuinely be clearer shown than described, offer it then (its own message); on approval, show the first visual (an Artifact page, or a local HTML page opened in their browser; built with the project's mockup kit when `CLAUDE.md` has a `- Mockup kit:` pointer). If no visual question ever arises, never offer it. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
@@ -130,7 +130,8 @@ A question about a UI topic is not automatically a visual question. "What does p
 
 **Showing a visual:** No server and no separate guide are needed. Each visual is one self-contained HTML page with inline CSS/SVG and no build step. Put the options side by side on one page and label them A/B/C so the user can answer in the terminal.
 
-1. **Artifact tool available** → write the page to the scratchpad and publish it as a private Artifact (load `artifact-design` first, as the tool requires). Republish the same file path for each revision so the URL stays the same, and give the link in the terminal. It also works from the user's phone.
+0. **Mockup kit pointer** → if the project's `CLAUDE.md` has a `- Mockup kit: <path>` line (`grep -m1 '^- Mockup kit: ' CLAUDE.md`), read `<path>SKILL.md`. Write only the body fragment, reusing its component snippets and laying options out in `.mk-options` > `.mk-option` with a `.mk-label`, to `<scratchpad>/brainstorm/<topic>-<n>.fragment.html`. Then, from the project root, run `node <path>render.mjs <fragment> --out <scratchpad>/brainstorm/<topic>-<n>.html --title "<topic>"`. The rendered file is the page steps 1 and 2 publish or open. If the render exits non-zero, show its message and fall back to the plain self-contained page. Without the pointer, skip this step.
+1. **Artifact tool available** → write the page to the scratchpad and publish it as a private Artifact (load `artifact-design` first, as the tool requires; for a kit page the app's own tokens govern colors and theming, so don't re-theme it). Republish the same file path for each revision so the URL stays the same, and give the link in the terminal. It also works from the user's phone.
 2. **Otherwise** → write the page to the scratchpad (e.g. `<scratchpad>/brainstorm/<topic>-<n>.html`) and run `open <path>`. Use a new file for each question so earlier screens stay available to compare.
 
 Keep asking the question itself in the terminal; the page only illustrates it. Artifact or mockup links go in the plan doc's Context when write-plan runs, never in issues (Claude-free rule).
