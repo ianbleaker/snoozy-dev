@@ -7,10 +7,13 @@
 #   1. Companion repo (CLAUDE.md has a `Private repo:` line, see plans-dir.sh):
 #      origin/main:plans/<NN>-*.md. No plan branch.
 #   2. In-project plan branch: the single task/<NN>-* branch on origin,
-#      holding docs/plans/<NN>-*.md. More than one such branch is an error.
+#      holding docs/plans/<NN>-*.md — or docs/plans/completed/<NN>-*.md when
+#      the archive commit is on that branch but not yet on main (a crash
+#      between archiving and opening the PR). More than one such branch is
+#      an error.
 #   3. In-project legacy: origin/main:docs/plans/<NN>-*.md (plans written
 #      before plan branches existed).
-# docs/plans/completed/ and plans/completed/ are never matched.
+# Otherwise docs/plans/completed/ and plans/completed/ are never matched.
 #
 # Usage:
 #   eval "$(find-plan.sh <NN> [--no-fetch])"
@@ -69,9 +72,13 @@ if ((count > 1)); then
 fi
 
 if ((count == 1)); then
+  changed=$(git -C "$repo" diff --name-only "origin/main...origin/$branches")
   f=$(match_in_tree "$repo" "origin/$branches" docs/plans)
+  if [[ -z "$f" ]]; then
+    a=$(match_in_tree "$repo" "origin/$branches" docs/plans/completed)
+    [[ -n "$a" ]] && grep -qxF "$a" <<<"$changed" && f=$a
+  fi
   if [[ -n "$f" ]]; then
-    changed=$(git -C "$repo" diff --name-only "origin/main...origin/$branches")
     only=0
     [[ "$changed" == "$f" ]] && only=1
     emit "$f" "$repo" "origin/$branches:$f" "$branches" "$only"
