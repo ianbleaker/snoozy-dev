@@ -51,7 +51,8 @@ Helpers next to this file: `audit.py` (the step 2/5/9 scan: `python3 -I "${CLAUD
 ### 3. Companion
 
 - Scratchpad clone of `OLD`, then `git filter-repo --path <each strip> --path <each copy source> --path-rename docs/plans/:plans/ --path-rename <copy source>:<companion path> ...`.
-- Add in one commit: `CLAUDE.md`, `CLAUDE.local.md` (if present), `.claude/` (all from the project's working copy) and an empty `.claude-free-exempt`. Ensure `plans/completed/` exists (`.gitkeep` if empty).
+- Create the empty `.claude-free-exempt` first, in its own command: the Claude-free hook checks for it before a commit runs, so a commit whose message mentions `CLAUDE.md` is blocked until the file exists.
+- Add in one commit: `CLAUDE.md`, `CLAUDE.local.md` (if present), `.claude/` (all from the project's working copy) and `.claude-free-exempt`. Ensure `plans/completed/` exists (`.gitkeep` if empty).
 - **Confirm** (its own question), then `gh repo create <owner>/<new>-private --private`, add it as `origin` in the scratchpad clone and `git push -u origin main`.
 - `git clone` it to `../<new>-private`.
 - In the project, replace `CLAUDE.md` and `.claude` (and `CLAUDE.local.md` if present) with relative symlinks into `../<new>-private/`, and make sure `.git/info/exclude` lists each of them without a trailing slash (`.claude/` matches only a directory, not the symlink).
