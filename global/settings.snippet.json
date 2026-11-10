@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -I \"$HOME/snoozy-dev/global/hooks/claude-free.py\"",
+            "command": "python3 -I \"$HOME/development/snoozy-dev/global/hooks/claude-free.py\"",
             "timeout": 10
           }
         ]
@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -I \"$HOME/snoozy-dev/global/hooks/md-unwrap.py\" --hook",
+            "command": "python3 -I \"$HOME/development/snoozy-dev/global/hooks/md-unwrap.py\" --hook",
             "timeout": 10
           }
         ]

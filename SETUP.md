@@ -5,8 +5,8 @@ Portable skills, hooks, and working conventions for Claude Code. This repo is th
 **Install the plugin — same script everywhere:**
 
 ```bash
-git clone https://github.com/ianbleaker/snoozy-dev.git ~/snoozy-dev
-~/snoozy-dev/scripts/install-plugin.sh
+git clone https://github.com/ianbleaker/snoozy-dev.git ~/development/snoozy-dev
+~/development/snoozy-dev/scripts/install-plugin.sh
 ```
 
 Skills then appear namespaced (`/snoozy-dev:onboard`, …). Then, for a local machine, apply Layer 1 below (CLAUDE.md + settings snippet), and in each project run `/snoozy-dev:onboard`.
@@ -42,13 +42,13 @@ Rules of thumb:
 Symlink CLAUDE.md so this repo stays the source of truth. (Skills and the agent are installed by the plugin — symlinking them won't work, since they rely on `${CLAUDE_PLUGIN_ROOT}`; re-run `scripts/install-plugin.sh` to pick up edits.)
 
 ```bash
-ln -sf ~/snoozy-dev/global/CLAUDE.md ~/.claude/CLAUDE.md
+ln -sf ~/development/snoozy-dev/global/CLAUDE.md ~/.claude/CLAUDE.md
 ```
 
 `~/.claude/settings.json` holds machine-specific config (model, theme, etc.) so it isn't symlinked wholesale — merge `global/settings.snippet.json` into it instead (re-run after any snippet update):
 
 ```bash
-jq -s '.[0] * .[1]' ~/.claude/settings.json ~/snoozy-dev/global/settings.snippet.json \
+jq -s '.[0] * .[1]' ~/.claude/settings.json ~/development/snoozy-dev/global/settings.snippet.json \
   > /tmp/settings.merged.json && mv /tmp/settings.merged.json ~/.claude/settings.json
 ```
 

@@ -7,13 +7,13 @@ Portable Claude Code configuration: global skills, hook recipes, and working con
 On a clean machine, clone this repo and install the plugin:
 
 ```bash
-git clone https://github.com/ianbleaker/snoozy-dev.git ~/snoozy-dev
-~/snoozy-dev/scripts/install-plugin.sh
+git clone https://github.com/ianbleaker/snoozy-dev.git ~/development/snoozy-dev
+~/development/snoozy-dev/scripts/install-plugin.sh
 ```
 
 Then tell Claude:
 
-> Read ~/snoozy-dev/SETUP.md and apply Layer 1.
+> Read ~/development/snoozy-dev/SETUP.md and apply Layer 1.
 
 In each project, run `/snoozy-dev:onboard`.
 
@@ -27,8 +27,8 @@ This repo is a Claude Code plugin marketplace (`.claude-plugin/marketplace.json`
 2. Set the environment's **setup script** to:
 
    ```bash
-   git clone -q --depth 1 https://github.com/ianbleaker/snoozy-dev.git ~/snoozy-dev \
-     && ~/snoozy-dev/scripts/install-plugin.sh
+   git clone -q --depth 1 https://github.com/ianbleaker/snoozy-dev.git ~/development/snoozy-dev \
+     && ~/development/snoozy-dev/scripts/install-plugin.sh
    ```
 
 3. Start a session; skills are available as `/snoozy-dev:<name>`, e.g. `/snoozy-dev:onboard`. Use one environment for all repos you want this in.
