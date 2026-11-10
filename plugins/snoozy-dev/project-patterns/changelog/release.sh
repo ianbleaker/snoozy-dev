@@ -119,6 +119,7 @@ if [ "$MODE" = "--open" ]; then
   trap 'rm -f "$NOTES"' EXIT
   frag notes "$VERSION" > "$NOTES"
   run git push --quiet -u origin "$BRANCH"
+  # A release PR needs no changelog fragment (branch-workflow.md "PR" step): the gate excludes release commits.
   run gh pr create --base main --head "$BRANCH" --title "chore: release $PREFIX$VERSION" --body-file "$NOTES"
   exit 0
 fi
