@@ -101,7 +101,7 @@ Decisions, each with its reason:
   - **Done when:**
     - `scripts/verify.sh` passes.
     - In a scratchpad clone with a local `task/5-x` holding `docs/plans/5-x.md`, whose upstream was deleted, `sweep.sh` prints it under `Kept:` and `git branch --list task/5-x` still shows it. Stub `gh` on `PATH` to return empty for `pr list`.
-- [ ] **Sync the convention docs: `plugins/snoozy-dev/project-patterns/task-labels.md`, `plugins/snoozy-dev/skills/onboard/SKILL.md`, `CLAUDE.md`.**
+- [x] **Sync the convention docs: `plugins/snoozy-dev/project-patterns/task-labels.md`, `plugins/snoozy-dev/skills/onboard/SKILL.md`, `CLAUDE.md`.**
   - `task-labels.md`: `status:planned` row = "`/write-plan` pushed a plan doc to its `task/<NN>-*` branch". Document the `Plan:` body line: its position directly above `## Dependencies`, only `/write-plan` writes it, and it's in-project only. Update the `gh label create "status:planned"` description only if it still reads correctly; otherwise leave it.
   - onboard's CLAUDE.md snippet (around lines 190–191) and this repo's `CLAUDE.md` `## Plans` section: plan docs live in `docs/plans/` on their `task/<NN>-<slug>` branch and reach `main` through the task's PR.
   - **Done when:**

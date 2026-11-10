@@ -34,7 +34,7 @@ Single source of truth for the GitHub Issues label taxonomy used across every pr
 | --- | --- |
 | `status:draft` | Needs triage before it can be pulled. Set unconditionally at creation by `/log-task`. |
 | `status:ready` | Approved to be pulled by `/next-task` — either "small enough, just implement it" or "plan doc reviewed and approved." |
-| `status:planned` | `/write-plan` finished a doc for this issue. On its own: awaiting the user's review/approval of the plan. Alongside `status:ready`: plan reviewed and approved. Only `/write-plan` adds this. |
+| `status:planned` | `/write-plan` pushed a plan doc for this issue to its `task/<NN>-*` branch (in-project plans; a companion plan goes to the companion's `main`). On its own: awaiting the user's review/approval of the plan. Alongside `status:ready`: plan reviewed and approved. Only `/write-plan` adds this. |
 
 ## Status
 
@@ -74,6 +74,8 @@ Who writes each line:
 - The user at triage — any line.
 - `/next-task` (after the user answers) and `/write-plan` (when the plan resolves it) — set `Decision needed:` to `none` and append a `Decided:` line.
 - A `/batch-tasks` worker when it bails — writes the blocking question into `Decision needed:`.
+
+**`Plan:` line.** An issue with an in-project plan carries `Plan: https://github.com/<owner>/<repo>/blob/task/<NN>-<slug>/docs/plans/<NN>-<slug>.md` on its own line directly above `## Dependencies` — never inside the block, so its parse is unaffected. It's a one-tap link to the plan on its branch (the GitHub phone app included). Only `/write-plan` writes it, replacing any earlier one; companion plans never get one (their URL must not appear in a possibly-public issue). It stops resolving once the merge deletes the branch, which is when the issue closes.
 
 The block is required for `/batch-tasks` eligibility: an issue without it is ineligible (a missing block means unknown, not safe). `Decided:` lines are binding on implementers, like a plan's "Do not do".
 
