@@ -9,5 +9,6 @@ Run `${CLAUDE_PLUGIN_ROOT}/skills/sweep-tasks/sweep.sh` and relay its output ver
 
 ## Rules
 
+- Never delete a `task/*` branch that holds a plan doc (its diff from `origin/main` touches `docs/plans/`) and has no merged PR — `/write-plan` keeps plans on their task branch, so it may be the only copy. `sweep.sh` lists it under `Kept:`.
 - Never run automatically from another skill — the user invokes this directly when they suspect drift.
 - Force-delete (`git branch -D`) only applies to a local branch matching `task/<issue-number>-*` or an ad hoc prefix from `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` whose upstream shows `gone` after `git fetch --prune` — never a blanket branch deletion.

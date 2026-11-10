@@ -95,7 +95,7 @@ Decisions, each with its reason:
   - Step 2: the diff is `git diff origin/main...<branch>` on the plan's branch, using `PLAN_BRANCH` from `find-plan.sh <NN>` when set.
   - Step 7: when the PR is still open, the audit section and any `completed/` move are committed on that branch. Keep today's `docs/<slug>-audit` branch rule for after merge.
   - **Done when** `grep -c 'find-plan.sh' plugins/snoozy-dev/skills/audit-plan/SKILL.md` is ≥1 and `scripts/verify.sh` passes.
-- [ ] **Protect plan branches in sweep: `plugins/snoozy-dev/skills/sweep-tasks/sweep.sh`, `plugins/snoozy-dev/skills/sweep-tasks/SKILL.md`.**
+- [x] **Protect plan branches in sweep: `plugins/snoozy-dev/skills/sweep-tasks/sweep.sh`, `plugins/snoozy-dev/skills/sweep-tasks/SKILL.md`.**
   - In `sweep.sh`'s `else` (no merged PR) branch: if `git diff --name-only origin/main..."$branch" -- docs/plans/` is non-empty, don't delete. Add `"$branch (kept: holds a plan doc, no merged PR)"` to a new `kept` array, printed as a `Kept:` section, and `continue`.
   - Add a rule line to SKILL.md: never delete a `task/*` branch that holds a plan doc and has no merged PR.
   - **Done when:**
