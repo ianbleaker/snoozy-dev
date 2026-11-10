@@ -21,4 +21,4 @@ Portable Claude Code configuration: the `snoozy-dev` plugin (skills, agents, pro
 | `scripts/install-plugin.sh` behavior | README.md install steps |
 
 ## Plans
-Plan docs live in `docs/plans/` — written via /write-plan, executed via /implement-plan. Completed plans move to `docs/plans/completed/`. A project may instead keep them in a private companion repo with a `Private repo: ../<repo>-private` line here (resolved by `plugins/snoozy-dev/project-patterns/plans-dir.sh`; not used for this repo).
+Plan docs live in `docs/plans/` on their `task/<NN>-<slug>` branch — written via /write-plan, executed via /implement-plan, and reach `main` through the task's PR (`plugins/snoozy-dev/project-patterns/find-plan.sh <NN>` finds them). Completed plans move to `docs/plans/completed/` in that PR. A project may instead keep them in a private companion repo with a `Private repo: ../<repo>-private` line here (resolved by `plugins/snoozy-dev/project-patterns/plans-dir.sh`; not used for this repo).

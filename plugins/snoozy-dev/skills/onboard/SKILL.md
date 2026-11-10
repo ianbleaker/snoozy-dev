@@ -187,8 +187,9 @@ make it a hook instead (see snoozy-dev SETUP.md) and don't list it here.>
 | --- | --- |
 
 ## Plans
-Plan docs live in `docs/plans/` — written via /write-plan, executed via
-/implement-plan. Completed plans move to `docs/plans/completed/`.
+Plan docs live in `docs/plans/` on their `task/<NN>-<slug>` branch — written
+via /write-plan, executed via /implement-plan, and reach `main` through the
+task's PR. Completed plans move to `docs/plans/completed/` in that PR.
 <Optional: `Private repo: ../<repo>-private` keeps plans in a private companion
 repo's `plans/` instead (set up by /go-public).>
 ```

@@ -1,6 +1,6 @@
 # Branch workflow
 
-Every task that changes tracked files — a GitHub issue, a plan doc, or a direct chat request — runs on its own branch, commits per step, and ends in exactly one PR. None of it needs per-instance confirmation, since it never touches `main`. Never commit to or push `main` directly; the only exceptions are plan-doc writes by `/write-plan` and private companion repos (see `global/CLAUDE.md`).
+Every task that changes tracked files — a GitHub issue, a plan doc, or a direct chat request — runs on its own branch, commits per step, and ends in exactly one PR. None of it needs per-instance confirmation, since it never touches `main`. Never commit to or push `main` directly; the only exception is private companion repos (see `global/CLAUDE.md`). Plan docs are no exception: `/write-plan` commits them to their `task/<NN>-<slug>` branch, and they reach `main` through that task's PR.
 
 A companion repo (`Private repo:` line) never gets branches or PRs. Plans, tick-offs, audits and its `CLAUDE.md`/`.claude/` (symlinked into the project) commit straight to its `main` after `git -C <companion> pull --rebase --autostash origin main`. Only the project repo runs this workflow, so no change is ever merged twice.
 
@@ -10,6 +10,8 @@ A companion repo (`Private repo:` line) never gets branches or PRs. Plans, tick-
 - Anything else: `<type>/<slug>`, where `<type>` is the conventional-commit type of the main change — `feat`, `fix`, `refactor`, `docs`, `chore` or `security`. Preview staging, `/merge-preview` and `/sweep-tasks` recognize exactly these prefixes.
 
 ## Start — before the first edit
+
+When the issue already has a plan branch (`eval "$(find-plan.sh <NN>)"` sets `PLAN_BRANCH`), that is `<branch>`. Never derive a new slug for it.
 
 1. `git status --short`. Uncommitted changes that aren't this task's → stop and ask.
 2. `git fetch origin`.
@@ -27,7 +29,7 @@ Running Start again mid-task is safe: it lands on the existing branch with its c
 - One commit per step of the agreed plan — a plan doc's checklist item, or the step list approved in chat (a one-step request is one commit) — made once that step's verify passes. Conventional message.
 - In-project plan docs: the step's tick-off goes in the same commit. Companion-repo plans: tick-offs go to the companion as before, never into this branch.
 - Pre-existing fixes found mid-task: a separate commit on the same branch.
-- Push after each commit (`git push -u origin <branch>` the first time) so a crashed session leaves its work on origin. A pushed branch without a PR doesn't count as In Review. Exception: `task-worker` keeps its commits local until the PR step, so a bail leaves nothing on origin.
+- Push after each commit (`git push -u origin <branch>` the first time) so a crashed session leaves its work on origin. A pushed branch without a PR doesn't count as In Review. Exception: `task-worker` keeps its commits local until the PR step, so a bail leaves origin as it was.
 
 ## PR — when the planned work is done
 

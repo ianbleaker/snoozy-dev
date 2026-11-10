@@ -26,6 +26,7 @@ fi
 
 reconciled=()
 unreconciled=()
+kept=()
 swept=()
 
 while IFS= read -r branch; do
@@ -50,6 +51,12 @@ while IFS= read -r branch; do
       reconciled+=("#${issue} (closed, merged PR $pr_url)")
     fi
   else
+    # A plan doc may live only on this branch (write-plan commits plans to
+    # their task branch): never delete it without a merged PR.
+    if [[ -n "$(git diff --name-only origin/main..."$branch" -- docs/plans/)" ]]; then
+      kept+=("$branch (kept: holds a plan doc, no merged PR)")
+      continue
+    fi
     unreconciled+=("$branch (no merged PR found for issue #${issue})")
   fi
 
@@ -58,7 +65,7 @@ while IFS= read -r branch; do
 done <<< "$stale_branches"
 
 echo "Branches swept: ${#swept[@]}"
-for b in "${swept[@]}"; do
+for b in ${swept[@]+"${swept[@]}"}; do
   echo "  - $b"
 done
 
@@ -73,5 +80,12 @@ if [[ ${#unreconciled[@]} -gt 0 ]]; then
   echo "Unreconciled: ${#unreconciled[@]}"
   for u in "${unreconciled[@]}"; do
     echo "  - $u"
+  done
+fi
+
+if [[ ${#kept[@]} -gt 0 ]]; then
+  echo "Kept: ${#kept[@]}"
+  for k in "${kept[@]}"; do
+    echo "  - $k"
   done
 fi

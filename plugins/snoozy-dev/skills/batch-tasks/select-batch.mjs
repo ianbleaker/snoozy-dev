@@ -34,28 +34,30 @@ for (let i = 0; i < argv.length; i++) {
 }
 
 const repo = sh('git', ['remote', 'get-url', 'origin']).trim().replace(/.*[:/]([^/]+\/[^/.]+)(\.git)?$/, '$1');
-sh('git', ['fetch', 'origin', 'main', '--quiet']);
+// One up-front fetch (all branches: plan branches are task/<N>-*), then every
+// find-plan.sh call runs with --no-fetch.
+sh('git', ['fetch', '-q', '--prune', 'origin']);
 const mainFiles = sh('git', ['ls-tree', '-r', '--name-only', 'origin/main']).split('\n').filter(Boolean);
 const fileSet = new Set(mainFiles);
+const parseEnv = (out) => Object.fromEntries(out.trim().split('\n').filter(Boolean)
+  .map((l) => l.split(/=(.*)/s).slice(0, 2)).map(([k, v]) => [k, v === "''" ? '' : v.replace(/\\(.)/g, '$1')]));
+const patterns = (f) => fileURLToPath(new URL(`../../project-patterns/${f}`, import.meta.url));
 // Plans live in a private companion repo when CLAUDE.md has a `Private repo:`
-// line (see project-patterns/plans-dir.sh), otherwise in docs/plans/ on main.
-const plansEnv = Object.fromEntries(sh(fileURLToPath(new URL('../../project-patterns/plans-dir.sh', import.meta.url)), [])
-  .trim().split('\n').map((l) => l.split(/=(.*)/s).slice(0, 2)).map(([k, v]) => [k, v.replace(/\\(.)/g, '$1')]));
-const { PLANS_REPO: plansRepo, PLANS_DIR: plansDir } = plansEnv;
-const companion = plansDir !== `${plansRepo}/docs/plans`;
-let companionFiles = [];
-if (companion) {
-  sh('git', ['-C', plansRepo, 'fetch', '-q', 'origin', 'main']);
-  companionFiles = sh('git', ['-C', plansRepo, 'ls-tree', '-r', '--name-only', 'origin/main']).split('\n').filter(Boolean);
-}
-// Plan doc for issue n: { path to report, git -C repo, ref path on origin/main }.
-function findPlan(n) {
-  if (companion) {
-    const f = companionFiles.find((x) => x.startsWith(`plans/${n}-`) && x.endsWith('.md') && !x.includes('/completed/'));
-    return f && { path: `${plansDir}/${f.slice('plans/'.length)}`, repo: plansRepo, ref: f };
+// line (see project-patterns/plans-dir.sh): fetch it too.
+const { PLANS_REPO: plansRepo, PLANS_DIR: plansDir } = parseEnv(sh(patterns('plans-dir.sh'), []));
+if (plansDir !== `${plansRepo}/docs/plans`) sh('git', ['-C', plansRepo, 'fetch', '-q', 'origin', 'main']);
+// Plan doc for issue n via find-plan.sh (the one shared lookup): its env
+// (PLAN_PATH, PLAN_REPO, PLAN_REF, PLAN_BRANCH, PLAN_ONLY), null when there is
+// no plan, or { error } for several task/<n>-* branches on origin.
+async function findPlan(n) {
+  try {
+    const { stdout } = await execFileP(patterns('find-plan.sh'), [String(n), '--no-fetch']);
+    return parseEnv(stdout);
+  } catch (e) {
+    if (e.code === 1) return null;
+    if (e.code === 2) return { error: `multiple task/${n}-* branches on origin` };
+    throw e;
   }
-  const f = mainFiles.find((x) => x.startsWith(`docs/plans/${n}-`) && x.endsWith('.md'));
-  return f && { path: f, repo: '.', ref: f };
 }
 const byBase = new Map();
 for (const f of mainFiles) {
@@ -74,7 +76,8 @@ const inReview = new Set(openPrs
 // Issues that already have an open PR (task branch or `Closes #N`) — never re-batch.
 const hasOpenPr = new Set([...inReview, ...openPrs.flatMap((p) => p.closingIssuesReferences.map((i) => i.number))]);
 // A pushed task/<N>-* branch with no PR is work in progress in another
-// session (branch-workflow.md pushes per commit) — never re-batch it either.
+// session (branch-workflow.md pushes per commit) — never re-batch it either,
+// unless its diff from origin/main is only its plan doc (PLAN_ONLY=1).
 const hasBranch = new Set(sh('git', ['ls-remote', '--heads', 'origin', 'refs/heads/task/*']).split('\n')
   .map((l) => l.match(/refs\/heads\/task\/(\d+)-/)?.[1]).filter(Boolean).map(Number));
 
@@ -116,15 +119,15 @@ const checks = ready.map(async (issue) => {
   const size = label(issue, 'size:');
   const why = (r) => ineligible.push({ n, r });
   if (hasOpenPr.has(n)) return why('already has an open PR');
-  if (hasBranch.has(n)) return why('task branch already on origin (in progress)');
+  const planRef = size !== 'small' || hasBranch.has(n) ? await findPlan(n) : null;
+  if (planRef?.error) return why(planRef.error);
+  if (hasBranch.has(n) && planRef?.PLAN_ONLY !== '1') return why('task branch already on origin (in progress)');
   if (!d) return why('no ## Dependencies block');
   if (!/^none\b/i.test(d.decision)) return why(`decision needed: ${d.decision}`);
   let plan = 'none';
-  let planRef = null;
   if (size !== 'small') {
-    planRef = findPlan(n);
-    if (!planRef) return why(`size:${size ?? '?'} without ${companion ? `${plansDir}/` : 'docs/plans/'}${n}-*.md`);
-    plan = planRef.path;
+    if (!planRef) return why(`size:${size ?? '?'} with no plan (find-plan.sh)`);
+    plan = planRef.PLAN_PATH;
   }
   const conflictsInReview = d.conflicts.filter((c) => inReview.has(c));
   if (conflictsInReview.length) return why(`conflicts with in-review ${conflictsInReview.map((c) => '#' + c).join(', ')}`);
@@ -141,14 +144,14 @@ const checks = ready.map(async (issue) => {
   const fp = new Set();
   const src = [];
   if (plan !== 'none') {
-    pathsIn(sh('git', ['-C', planRef.repo, 'show', `origin/main:${planRef.ref}`]), true).forEach((p) => fp.add(p));
+    pathsIn(sh('git', ['-C', planRef.PLAN_REPO, 'show', planRef.PLAN_REF]), true).forEach((p) => fp.add(p));
     src.push('plan');
   }
   if (touches) { pathsIn(touches, true).forEach((p) => fp.add(p)); src.push('touches'); }
   const before = fp.size;
   pathsIn(issue.body.replace(touches ?? '', ''), false).forEach((p) => fp.add(p));
   if (fp.size > before) src.push('body');
-  eligible.push({ n, issue, d, plan, size, prio: label(issue, 'priority:'), fp, src });
+  eligible.push({ n, issue, d, plan, branch: planRef?.PLAN_BRANCH || '-', size, prio: label(issue, 'priority:'), fp, src });
 });
 await Promise.all(checks);
 
@@ -189,7 +192,7 @@ const fpLine = (c) => (c.fp.size ? `[${c.src.join('+')}${c.src.join() === 'body'
 console.log(`REPO ${repo}`);
 console.log(`BATCH (${batch.length}/${cap})`);
 for (const c of batch) {
-  console.log(`#${c.n} ${c.prio}/${c.size} plan=${c.plan} blocks=${c.d.blocks.length} — ${c.issue.title}`);
+  console.log(`#${c.n} ${c.prio}/${c.size} plan=${c.plan} branch=${c.branch} blocks=${c.d.blocks.length} — ${c.issue.title}`);
   console.log(`   footprint ${fpLine(c)}`);
 }
 console.log('DROPPED'); dropped.forEach((l) => console.log(l));

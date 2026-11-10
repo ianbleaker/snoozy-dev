@@ -28,7 +28,7 @@ Decisions, each with its reason:
 
 ## Checklist
 
-- [ ] **Add `plugins/snoozy-dev/project-patterns/find-plan.sh <NN> [--no-fetch]`.** Header comment states usage and output like `plans-dir.sh`. Behaviour:
+- [x] **Add `plugins/snoozy-dev/project-patterns/find-plan.sh <NN> [--no-fetch]`.** Header comment states usage and output like `plans-dir.sh`. Behaviour:
   - It resolves `PLANS_REPO`/`PLANS_DIR` by running `plans-dir.sh` from its own directory, then runs `git fetch -q origin` in each repo it reads, unless `--no-fetch` is passed.
   - **Companion** (`PLANS_DIR` ≠ `$PLANS_REPO/docs/plans`): look in `git -C "$PLANS_REPO" ls-tree -r --name-only origin/main plans/` for `plans/<NN>-*.md`, excluding `plans/completed/`. If found: `PLAN_PATH=$PLANS_DIR/<file>` (absolute), `PLAN_REPO=$PLANS_REPO`, `PLAN_REF=origin/main:plans/<file>`, `PLAN_BRANCH=` (empty), `PLAN_ONLY=0`.
   - **In-project, branch:** `git ls-remote --heads origin "task/<NN>-*"`. With 2 or more matches, print `find-plan: multiple task/<NN>-* branches on origin: …` to stderr and exit 2. With exactly one, look in `git ls-tree -r --name-only origin/<branch> docs/plans/` for `docs/plans/<NN>-*.md`, excluding `docs/plans/completed/`. Do not use `git show` with a glob, because it doesn't expand one. If found: `PLAN_PATH=docs/plans/<file>` (repo-relative), `PLAN_REPO=<project root>`, `PLAN_REF=origin/<branch>:docs/plans/<file>`, `PLAN_BRANCH=<branch>`, `PLAN_ONLY=1` if `git diff --name-only origin/main...origin/<branch>` lists exactly that one plan file, else `0`.
@@ -40,7 +40,7 @@ Decisions, each with its reason:
     3. In a scratchpad bare repo plus clone, with a pushed `task/5-x` branch holding only `docs/plans/5-x.md`, it prints `PLAN_BRANCH=task/5-x PLAN_ONLY=1`. Adding a second file to that branch gives `PLAN_ONLY=0`, and adding a second `task/5-y` branch gives exit 2.
 
     Never push test branches to this repo's real origin.
-- [ ] **Rewrite `/write-plan`'s commit flow and template, and drop the global exception: `plugins/snoozy-dev/skills/write-plan/SKILL.md`, `global/CLAUDE.md`, `plugins/snoozy-dev/project-patterns/branch-workflow.md`.**
+- [x] **Rewrite `/write-plan`'s commit flow and template, and drop the global exception: `plugins/snoozy-dev/skills/write-plan/SKILL.md`, `global/CLAUDE.md`, `plugins/snoozy-dev/project-patterns/branch-workflow.md`.**
   - In write-plan Phase 2, the in-project flow becomes:
     1. Pick the slug once from the issue title.
     2. Run branch-workflow Start for `task/<NN>-<slug>`.
@@ -58,7 +58,7 @@ Decisions, each with its reason:
     - `grep -n 'checkout -B main\|straight to .main.\|exception to the never-push' plugins/snoozy-dev/skills/write-plan/SKILL.md global/CLAUDE.md plugins/snoozy-dev/project-patterns/branch-workflow.md` shows only companion-repo lines.
     - `grep -n 'find-plan.sh' plugins/snoozy-dev/skills/write-plan/SKILL.md` has at least one hit.
     - `scripts/verify.sh` passes.
-- [ ] **Route `/next-task` and `/implement-plan` through `find-plan.sh`: `plugins/snoozy-dev/skills/next-task/SKILL.md`, `plugins/snoozy-dev/skills/implement-plan/SKILL.md`.**
+- [x] **Route `/next-task` and `/implement-plan` through `find-plan.sh`: `plugins/snoozy-dev/skills/next-task/SKILL.md`, `plugins/snoozy-dev/skills/implement-plan/SKILL.md`.**
   - next-task step 4 (`size:medium`/`size:large`): replace the `plans-dir.sh` + `ls "$PLANS_DIR"/<NN>-*.md` check with `eval "$(find-plan.sh <NN>)"`. Exit 0 means it exists: hand off `/implement-plan <PLAN_PATH>`. Exit 1 means it doesn't: `/write-plan`. Exit 2: stop and report the duplicate branches. Update the Rules line about never regenerating a plan to match.
   - implement-plan step 0 and step 2:
     - Take `<NN>` from the plan filename and run `find-plan.sh <NN>`.
@@ -69,7 +69,7 @@ Decisions, each with its reason:
     - `grep -n 'ls "\$PLANS_DIR"' plugins/snoozy-dev/skills/next-task/SKILL.md` returns nothing.
     - `grep -c 'find-plan.sh'` is ≥1 in both files.
     - `scripts/verify.sh` passes.
-- [ ] **Make `/batch-tasks` plan-branch aware: `plugins/snoozy-dev/skills/batch-tasks/select-batch.mjs`, `plugins/snoozy-dev/skills/batch-tasks/SKILL.md`, `plugins/snoozy-dev/agents/task-worker.md`.**
+- [x] **Make `/batch-tasks` plan-branch aware: `plugins/snoozy-dev/skills/batch-tasks/select-batch.mjs`, `plugins/snoozy-dev/skills/batch-tasks/SKILL.md`, `plugins/snoozy-dev/agents/task-worker.md`.**
   - `select-batch.mjs`:
     - Replace `findPlan()` and the companion/main `ls-tree` lookups with a call to `find-plan.sh <n> --no-fetch`, after one up-front `git fetch -q origin` in the project, plus the companion when configured. Parse its `%q` output the way the existing `plansEnv` parse does. Exit 1 means no plan. Exit 2 makes the issue ineligible with reason `multiple task/<n>-* branches on origin`.
     - Exempt from `hasBranch` an issue whose `PLAN_ONLY=1`.
@@ -91,17 +91,17 @@ Decisions, each with its reason:
     - `node --check plugins/snoozy-dev/skills/batch-tasks/select-batch.mjs` and `scripts/verify.sh` pass.
     - `select-batch.mjs --dry-run`-style run (`select-batch.mjs 5` with no `--bodies-dir`) from this repo completes without error and lists #10 and #8 with sensible reasons.
     - `grep -n "origin/main:\${planRef" plugins/snoozy-dev/skills/batch-tasks/select-batch.mjs` returns nothing.
-- [ ] **Run `/audit-plan` on the plan's branch: `plugins/snoozy-dev/skills/audit-plan/SKILL.md`.**
+- [x] **Run `/audit-plan` on the plan's branch: `plugins/snoozy-dev/skills/audit-plan/SKILL.md`.**
   - Step 2: the diff is `git diff origin/main...<branch>` on the plan's branch, using `PLAN_BRANCH` from `find-plan.sh <NN>` when set.
   - Step 7: when the PR is still open, the audit section and any `completed/` move are committed on that branch. Keep today's `docs/<slug>-audit` branch rule for after merge.
   - **Done when** `grep -c 'find-plan.sh' plugins/snoozy-dev/skills/audit-plan/SKILL.md` is ≥1 and `scripts/verify.sh` passes.
-- [ ] **Protect plan branches in sweep: `plugins/snoozy-dev/skills/sweep-tasks/sweep.sh`, `plugins/snoozy-dev/skills/sweep-tasks/SKILL.md`.**
+- [x] **Protect plan branches in sweep: `plugins/snoozy-dev/skills/sweep-tasks/sweep.sh`, `plugins/snoozy-dev/skills/sweep-tasks/SKILL.md`.**
   - In `sweep.sh`'s `else` (no merged PR) branch: if `git diff --name-only origin/main..."$branch" -- docs/plans/` is non-empty, don't delete. Add `"$branch (kept: holds a plan doc, no merged PR)"` to a new `kept` array, printed as a `Kept:` section, and `continue`.
   - Add a rule line to SKILL.md: never delete a `task/*` branch that holds a plan doc and has no merged PR.
   - **Done when:**
     - `scripts/verify.sh` passes.
     - In a scratchpad clone with a local `task/5-x` holding `docs/plans/5-x.md`, whose upstream was deleted, `sweep.sh` prints it under `Kept:` and `git branch --list task/5-x` still shows it. Stub `gh` on `PATH` to return empty for `pr list`.
-- [ ] **Sync the convention docs: `plugins/snoozy-dev/project-patterns/task-labels.md`, `plugins/snoozy-dev/skills/onboard/SKILL.md`, `CLAUDE.md`.**
+- [x] **Sync the convention docs: `plugins/snoozy-dev/project-patterns/task-labels.md`, `plugins/snoozy-dev/skills/onboard/SKILL.md`, `CLAUDE.md`.**
   - `task-labels.md`: `status:planned` row = "`/write-plan` pushed a plan doc to its `task/<NN>-*` branch". Document the `Plan:` body line: its position directly above `## Dependencies`, only `/write-plan` writes it, and it's in-project only. Update the `gh label create "status:planned"` description only if it still reads correctly; otherwise leave it.
   - onboard's CLAUDE.md snippet (around lines 190–191) and this repo's `CLAUDE.md` `## Plans` section: plan docs live in `docs/plans/` on their `task/<NN>-<slug>` branch and reach `main` through the task's PR.
   - **Done when:**
