@@ -3,10 +3,10 @@
 Portable Claude Code configuration: the `snoozy-dev` plugin (skills, agents, project patterns), global settings, and the SETUP.md playbook. Mostly markdown plus shell/Node helper scripts; no app build.
 
 ## Verify
-`scripts/verify.sh` — `bash -n` on every tracked `.sh`, `node --check` on every `.mjs`. Run by the Edit/Stop hooks in `.claude/settings.json`, `.git/hooks/pre-commit`, and CI. No test suite or linter is configured.
+`scripts/verify.sh` — `bash -n` on every tracked `.sh`, `node --check` on every `.mjs`, then `node --test` on the tracked `*.test.mjs` files (only the ones passed, when given file args). Run by the Edit/Stop hooks in `.claude/settings.json`, `.git/hooks/pre-commit`, and CI. No linter is configured.
 
 ## Invariants
-- Skills live in `plugins/snoozy-dev/skills/<name>/SKILL.md`; helper scripts sit next to the skill that uses them.
+- Skills live in `plugins/snoozy-dev/skills/<name>/SKILL.md`; helper scripts sit next to the skill that uses them, and helpers shared by several skills live in `plugins/snoozy-dev/project-patterns/` (e.g. `find-plan.sh`, `changelog/`).
 - Never overwrite a user's existing project config from a skill — merge, and ask first.
 - `.claude-free-exempt` at the root marks this repo exempt from the Claude-free rule and its hook: its skills have to name Claude.
 
