@@ -93,3 +93,12 @@ test('locate ignores node_modules and anything deeper than 3 levels', () => {
   fs.writeFileSync(path.join(dir, 'a/b/c/doc-changelog.json'), '{}')
   assert.throws(() => locateConfig(dir), /no doc-changelog\.json/)
 })
+
+test('the example configs load without error', () => {
+  for (const name of fs.readdirSync(path.join(HERE, 'examples'))) {
+    const { dir } = makeRepo()
+    fs.copyFileSync(path.join(HERE, 'examples', name), path.join(dir, 'doc-changelog.json'))
+    assert.doesNotThrow(() => loadConfig(dir), name)
+  }
+  assert.deepEqual(fs.readdirSync(path.join(HERE, 'examples')).sort(), ['game.json', 'journals-rpg.json'])
+})
