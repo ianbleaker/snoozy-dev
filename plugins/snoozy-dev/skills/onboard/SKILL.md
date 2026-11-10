@@ -181,6 +181,7 @@ make it a hook instead (see snoozy-dev SETUP.md) and don't list it here.>
 
 ## Pointers
 <- Data model: docs/...  - Architecture entry point: docs/...>
+<- Mockup kit: <path>  (optional, see mockup-kit.md)>
 
 ## Doc-sync table
 | Edited area | Update this doc |
@@ -200,6 +201,14 @@ If CLAUDE.md already exists, don't recreate it — but check its Plans and Doc-s
 
 - Invariant guard hooks for any mechanical rules found in an existing CLAUDE.md.
 - A smoke-test scenario driver if it's a UI app (`${CLAUDE_PLUGIN_ROOT}/project-patterns/smoke-driver.md`).
+- A mockup kit if it's a UI app (`${CLAUDE_PLUGIN_ROOT}/project-patterns/mockup-kit.md`), so brainstorm mockups use the app's own tokens and stylesheets. On acceptance:
+  1. Ask the location: companion `.claude/skills/mockup-kit/` (the default when `CLAUDE.md` has a `Private repo:` line) or a tracked project `mockup-kit/` folder.
+  2. Copy `${CLAUDE_PLUGIN_ROOT}/project-patterns/mockup-kit.mjs` to `<kit>/render.mjs`.
+  3. Detect the token/stylesheet paths (compiled output for Tailwind/Sass/CSS modules), confirm them with the user, then write `<kit>/kit.json`.
+  4. Write `<kit>/SKILL.md` from the doc's template, seeding the snippet catalog from the app's components directory if one exists.
+  5. Ask first, then merge `- Mockup kit: <path>` into the existing `## Pointers` section of `CLAUDE.md`, never replacing existing lines.
+
+  If any `<kit>/` file already exists, leave it untouched and say so.
 - The architecture-docs + component-reuse convention if it's a UI project with a components directory (`${CLAUDE_PLUGIN_ROOT}/project-patterns/architecture-docs.md`).
 - The deploy-scripts convention (`${CLAUDE_PLUGIN_ROOT}/project-patterns/deploy-scripts.md`): if the repo has no `deploy/` folder yet, offer the full four-script scaffold (`setup.sh`, `deploy.sh`, `preview-setup.sh`, `preview-deploy.sh`, a `.service` unit template). Remind the user to add the `Preview URL:` line to `## Deploy` once `preview-setup.sh` has run and printed its port, plus an optional `Preview check:` smoke command (see deploy-scripts.md). If `deploy/setup.sh`/`deploy.sh` already exist, leave them untouched — offer only the two preview scripts (`preview-setup.sh`, `preview-deploy.sh`) alongside.
 - When `deploy/preview-setup.sh` and `deploy/preview-deploy.sh` already exist (or are being scaffolded in the same step), also offer the Tier 1 preview- automation workflow described in `${CLAUDE_PLUGIN_ROOT}/project-patterns/preview-workflow.md` (`.github/workflows/preview.yml`) — don't auto-create, same offer-don't- create posture as the rest of this step.

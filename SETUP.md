@@ -130,6 +130,10 @@ Cached judgment: `docs/review-rubric.md` lists *this codebase's* specific failur
 
 See [`plugins/snoozy-dev/project-patterns/smoke-driver.md`](plugins/snoozy-dev/project-patterns/smoke-driver.md). The rule that matters: **never drive a browser one command per model turn.** Write or extend a named scenario script, run it once, read the result. A smoke test should be 1–2 Bash calls, not 40 round-trips.
 
+### Pattern: mockup kit (UI apps)
+
+See [`plugins/snoozy-dev/project-patterns/mockup-kit.md`](plugins/snoozy-dev/project-patterns/mockup-kit.md). A per-project, dependency-free `render.mjs` wraps a brainstorm mockup fragment in one self-contained page styled with the app's own tokens and stylesheets. The kit builds the page; brainstorm still shows it as an Artifact or a local HTML file. Brainstorm finds it through a `- Mockup kit: <path>` line under `## Pointers` in the project's `CLAUDE.md`, and `/onboard` offers to scaffold it for UI projects.
+
 ### Pattern: deploy scripts (offered, not auto-scaffolded)
 
 See [`plugins/snoozy-dev/project-patterns/deploy-scripts.md`](plugins/snoozy-dev/project-patterns/deploy-scripts.md). Stack-agnostic shape for a project's `deploy/` folder: one systemd service, one git checkout, idempotent `setup.sh` + repeatable `deploy.sh` (pull → install deps → restart → verify, no silent rollback), plus a `preview-setup.sh`/`preview-deploy.sh` pair tracking a disposable `preview` branch on a second instance. `/onboard` offers the full four-script scaffold if no `deploy/` folder exists yet, or just the preview pair alongside an existing hand-rolled `deploy/setup.sh`/`deploy.sh` — never rewrites one.
