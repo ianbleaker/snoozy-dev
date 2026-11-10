@@ -18,7 +18,8 @@
 //
 // Every css file is inlined in order into one <style>: relative @imports are
 // inlined recursively (each file once), relative url() assets become data:
-// URIs. http(s) @imports and url()s are left alone. Artifact pages may load
+// URIs. http(s) url()s are left alone; http(s) @imports are hoisted to the
+// top of the <style> (browsers ignore an @import below any rule). Artifact pages may load
 // external stylesheets only from Google Fonts, hence the inlining.
 //
 // Helper classes for laying out options (mk- prefix, no colors of their own):
@@ -116,7 +117,7 @@ function inlineUrls(css, dir) {
   });
 }
 
-function inlineCss(file, seen) {
+function inlineCss(file, seen, externalImports) {
   const abs = path.resolve(file);
   if (seen.has(abs)) return '';
   seen.add(abs);
@@ -126,13 +127,17 @@ function inlineCss(file, seen) {
     /@import\s+(?:url\(\s*(['"]?)([^'")]+)\1\s*\)|(['"])([^'"]+)\3)\s*([^;]*);/g,
     (match, _q1, urlRef, _q2, strRef) => {
       const ref = (urlRef || strRef).trim();
-      if (isExternal(ref)) return match;
+      if (isExternal(ref)) {
+        // Browsers ignore an @import below any rule, so hoist it to the top.
+        externalImports.push(match);
+        return '';
+      }
       const target = path.resolve(dir, ref);
       if (!fs.existsSync(target)) {
         warn(`@import not found, left as-is: ${ref}`);
         return match;
       }
-      return inlineCss(target, seen);
+      return inlineCss(target, seen, externalImports);
     },
   );
   return `/* ${path.relative(process.cwd(), abs)} */\n${inlineUrls(css, dir)}\n`;
@@ -150,7 +155,9 @@ function main() {
     if (!fs.existsSync(f)) die(`css file not found: ${f} (paths are relative to the project root)`);
   }
   const seen = new Set();
-  const css = kit.css.map((f) => inlineCss(f, seen)).join('\n');
+  const externalImports = [];
+  const inlined = kit.css.map((f) => inlineCss(f, seen, externalImports)).join('\n');
+  const css = [...new Set(externalImports)].join('\n') + '\n' + inlined;
 
   const fragment = fs.readFileSync(opts.fragment, 'utf8');
   const htmlAttrs = Object.entries(kit.htmlAttrs || {})
