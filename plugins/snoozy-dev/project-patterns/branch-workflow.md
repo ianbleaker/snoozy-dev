@@ -29,7 +29,7 @@ Running Start again mid-task is safe: it lands on the existing branch with its c
 - One commit per step of the agreed plan — a plan doc's checklist item, or the step list approved in chat (a one-step request is one commit) — made once that step's verify passes. Conventional message.
 - In-project plan docs: the step's tick-off goes in the same commit. Companion-repo plans: tick-offs go to the companion as before, never into this branch.
 - Pre-existing fixes found mid-task: a separate commit on the same branch.
-- Push after each commit (`git push -u origin <branch>` the first time) so a crashed session leaves its work on origin. A pushed branch without a PR doesn't count as In Review. Exception: `task-worker` keeps its commits local until the PR step, so a bail leaves nothing on origin.
+- Push after each commit (`git push -u origin <branch>` the first time) so a crashed session leaves its work on origin. A pushed branch without a PR doesn't count as In Review. Exception: `task-worker` keeps its commits local until the PR step, so a bail leaves origin as it was.
 
 ## PR — when the planned work is done
 

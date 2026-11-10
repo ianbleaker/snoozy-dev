@@ -69,7 +69,7 @@ Decisions, each with its reason:
     - `grep -n 'ls "\$PLANS_DIR"' plugins/snoozy-dev/skills/next-task/SKILL.md` returns nothing.
     - `grep -c 'find-plan.sh'` is ≥1 in both files.
     - `scripts/verify.sh` passes.
-- [ ] **Make `/batch-tasks` plan-branch aware: `plugins/snoozy-dev/skills/batch-tasks/select-batch.mjs`, `plugins/snoozy-dev/skills/batch-tasks/SKILL.md`, `plugins/snoozy-dev/agents/task-worker.md`.**
+- [x] **Make `/batch-tasks` plan-branch aware: `plugins/snoozy-dev/skills/batch-tasks/select-batch.mjs`, `plugins/snoozy-dev/skills/batch-tasks/SKILL.md`, `plugins/snoozy-dev/agents/task-worker.md`.**
   - `select-batch.mjs`:
     - Replace `findPlan()` and the companion/main `ls-tree` lookups with a call to `find-plan.sh <n> --no-fetch`, after one up-front `git fetch -q origin` in the project, plus the companion when configured. Parse its `%q` output the way the existing `plansEnv` parse does. Exit 1 means no plan. Exit 2 makes the issue ineligible with reason `multiple task/<n>-* branches on origin`.
     - Exempt from `hasBranch` an issue whose `PLAN_ONLY=1`.

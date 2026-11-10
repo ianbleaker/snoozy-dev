@@ -14,15 +14,16 @@ The spawning prompt gives you:
 - **repo** — `owner/name`
 - **issue number** — `N`
 - **issue body** — a path to `body-<N>.md`, including its `## Dependencies` block. Read it there; it's authoritative: don't re-fetch it (`gh issue view`) except to rewrite it on a bail
-- **plan path** — the absolute path of the plan doc (`<project>/docs/plans/<N>-*.md`, or `<companion>/plans/<N>-*.md` when the project keeps plans in a private companion repo), or `none` for a `size:small` ticket. Use it as given; never resolve it against your worktree
+- **plan path** — the plan doc, or `none` for a `size:small` ticket. A companion plan (`<companion>/plans/<N>-*.md`, when the project keeps plans in a private companion repo) is given absolute: use it as given, never resolve it against your worktree. An in-project plan — on its task branch, or a legacy one on `main` — is given repo-relative (`docs/plans/<N>-*.md`): resolve it inside your worktree after Setup's checkout
+- **plan branch** — the `task/<N>-<slug>` branch holding the plan, or `none`
 - **predicted footprint** — the files the orchestrator expects you to touch, plus every other batch member's footprint (needed for the bail rule below)
 
 ## Setup
 
 You run in a fresh worktree with no dependencies installed. Start with (each its own Bash call — see Rules):
 
-1. `git fetch origin main`
-2. `git checkout -B task/<N>-<slug> --no-track origin/main` (never the worktree's current branch). This is `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` Start: `/batch-tasks` only hands out tickets with no `task/<N>-*` branch on origin, so there is nothing to resume.
+1. With a plan branch: `git fetch origin <plan branch>`. Otherwise: `git fetch origin main`.
+2. With a plan branch: `git checkout -B <plan branch> --no-track origin/<plan branch>` — that branch is `task/<N>-<slug>` for the rest of this doc; never derive another slug. Otherwise: `git checkout -B task/<N>-<slug> --no-track origin/main`. Never the worktree's current branch. This is `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` Start: `/batch-tasks` only hands out tickets whose `task/<N>-*` branch on origin is absent or holds nothing but the plan doc, so there is no work to resume.
 3. Install: `npm ci` in every directory holding a tracked `package-lock.json` (root first; list them with `git ls-files '*package-lock.json'`) — a nested package such as a server subfolder has its own deps, and its tests fail without them; otherwise the install command from the project's CLAUDE.md. If neither applies, skip.
 
 ## Route
@@ -30,7 +31,7 @@ You run in a fresh worktree with no dependencies installed. Start with (each its
 - **Plan path given** → read `${CLAUDE_PLUGIN_ROOT}/skills/implement-plan/SKILL.md` and follow it against that plan.
 - **Plan path `none`** (`size:small`) → implement directly from the issue body. No plan doc; don't read `/next-task`.
 
-Either way, commit after each plan item (or each step of a `size:small` change) once its verify passes — locally only, nothing pushed yet, so a bail leaves origin untouched. Once the project's verify passes for the whole task: `git push -u origin task/<N>-<slug>`, then `gh pr create --base main --head task/<N>-<slug> --title "..." --body "Closes #N\n\n<summary>"`. Exactly one PR, opened after the last commit. PR body is `Closes #N` plus the summary only — no "Generated with Claude Code" line, session URL, or attribution footer, and no mention of Claude or Anthropic and no Claude links (Claude-free rule in `global/CLAUDE.md`; the `claude-free.py` hook blocks it). The same goes for commit messages: no `Co-Authored-By` trailer.
+Either way, commit after each plan item (or each step of a `size:small` change) once its verify passes — locally only, nothing pushed yet, so a bail leaves origin untouched. Once the project's verify passes for the whole task: `git push -u origin task/<N>-<slug>` (with a plan branch, a fast-forward of it), then `gh pr create --base main --head task/<N>-<slug> --title "..." --body "Closes #N\n\n<summary>"`. Exactly one PR, opened after the last commit. PR body is `Closes #N` plus the summary only — no "Generated with Claude Code" line, session URL, or attribution footer, and no mention of Claude or Anthropic and no Claude links (Claude-free rule in `global/CLAUDE.md`; the `claude-free.py` hook blocks it). The same goes for commit messages: no `Co-Authored-By` trailer.
 
 ## Advisor
 
@@ -42,7 +43,7 @@ These replace the matching parts of the skill you follow:
 
 - **Escalations** — any point where the skill would call `AskUserQuestion` (an escalation, a `Decision needed:` question, a "stop and ask" rule) → bail instead.
 - **Discovered non-blocking items** — don't call `/log-task`; return them in the report. The orchestrator batches the approval.
-- **Commit/push/PR** — authorized by the batch approval (the same task-pipeline exception as `/next-task`). No per-step confirmation. You already branched in Setup: skip the branch part of `/implement-plan`'s step 2, keep its per-item commits but don't push them, and use the push/PR sequence in Route.
+- **Commit/push/PR** — authorized by the batch approval (the same task-pipeline exception as `/next-task`). No per-step confirmation. You already branched in Setup: skip the `find-plan.sh` Start in `/implement-plan`'s step 0 and the branch part of its step 2, keep its per-item commits but don't push them, and use the push/PR sequence in Route.
 - **Plan in a companion repo** (the plan path is outside the project, under `<companion>/plans/`) — commit the plan-doc edits (checklist tick-offs, `## Discovered`/`## Escalation` notes, the archive move to `plans/completed/`) in the companion, never in your worktree, and never copy the plan into the PR. Only that file, straight to the companion's `main`, each step its own Bash call: `git -C <companion> pull --rebase --autostash origin main`, `git -C <companion> add <the plan file>`, `git -C <companion> commit -m "docs: update plan for #N"`, `git -C <companion> push origin main`. Other workers share the companion: on a rejected push or an `index.lock` error, pull and retry, up to 3 attempts; still failing → leave the commit unpushed and say so in the report.
 - **`Decided:` lines** in the issue body are binding, like a plan's "Do not do". If a `Decided:` line contradicts the plan → bail.
 
@@ -58,7 +59,7 @@ Bail when any of these fires:
 Procedure:
 
 1. Discard all local work in the worktree: `git reset --hard`, then `git clean -fd`.
-2. Push nothing. Open no PR.
+2. Push nothing. Open no PR. Never delete, reset or force-push the origin plan branch — a bail leaves origin as it was.
 3. Rewrite the issue body's `Decision needed:` line to the blocking question, with enough context to answer it cold: fetch the body (`gh issue view <N> --repo <repo> --json body --jq .body > <tmp>`), edit that line in the file, write it back (`gh issue edit <N> --repo <repo> --body-file <tmp>`). Never retype the body. No issue comment.
 
 ## Report
