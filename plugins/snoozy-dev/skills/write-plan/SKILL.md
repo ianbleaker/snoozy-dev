@@ -21,9 +21,9 @@ This sets `PLANS_DIR` and `PLANS_REPO` (absolute paths): `<companion>/plans` and
 2. Go through the items **one at a time**. For each: state the problem, propose an approach, name the trade-offs, and challenge weak assumptions — including the user's. Use AskUserQuestion for decisions that are genuinely the user's.
 3. Track resolved decisions as you go. An item is resolved when the approach, scope, and acceptance criteria are unambiguous.
 4. Links to mockups, artifacts or brainstorm pages produced while sparring go in the plan's Context, never in the issue (Claude-free rule, `global/CLAUDE.md`). The issue refers to "the plan for #NN".
-5. Items the user defers accumulate in memory (title + one-line reason), not the checklist. At the end of Phase 1, before Phase 2 writing begins, present them in one `AskUserQuestion` call (multiSelect, one option per candidate). Call `/log-task` for each approved item. The doc's Context section records only `Deferred: logged as #NN - <title>` per approved item — nothing for rejected ones, which are dropped.
+5. Items the user defers accumulate in memory (title + one-line reason), not the checklist. At the end of Phase 1, before Phase 2 writing begins, present them in one `AskUserQuestion` call (multiSelect, one option per candidate). Call `/log-task` for each approved item. The doc's Context section records only a `- Deferred: logged as #NN - <title>` list item per approved item — nothing for rejected ones, which are dropped.
 
-If the plan's raw material came from a `/next-task` hand-off, the Context section must also include `Source issue: #NN` (the issue `/next-task` handed off) so `implement-plan` knows what to close later.
+If the plan's raw material came from a `/next-task` hand-off, the Context section must also include a `- Source issue: #NN` list item (the issue `/next-task` handed off) so `implement-plan` knows what to close later. `Source issue:` and `Deferred:` are always `- ` list items, because `global/hooks/md-unwrap.py` joins plain consecutive lines into one paragraph.
 
 **Issue backing (end of Phase 1, after the deferred-items checkpoint, before Phase 2 writing begins):** every plan doc must be backed by a GitHub issue labeled `status:ready`.
 
@@ -42,7 +42,7 @@ Either way, the plan doc's Context section records `Source issue: #NN` before Ph
 
 Only after every item is resolved. Location: `$PLANS_DIR` — the only supported location (see Precondition above). Filename: `<issue-number>-<issue-slug-text>.md` (regex: `^[0-9]+-[a-z0-9-]+\.md$`), using the `Source issue: #NN` established in the issue-backing step above. No date component — the issue already carries a creation timestamp on GitHub.
 
-**This exact format is load-bearing, not a convention.** `/next-task` detects an already-planned issue by testing whether `$PLANS_DIR/<issue-number>-*.md` exists; that glob only works reliably if every plan doc is named this way with no variation. Do not fall back to a sequential-number lookup or any other naming scheme.
+**This exact format is load-bearing, not a convention.** `/next-task`, `/implement-plan` and `/batch-tasks` detect an already-planned issue through `${CLAUDE_PLUGIN_ROOT}/project-patterns/find-plan.sh <issue-number>`, which matches `<issue-number>-*.md` on the plan's `task/<NN>-*` branch (or the companion's `main`); that match only works reliably if every plan doc is named this way with no variation. Do not fall back to a sequential-number lookup or any other naming scheme.
 
 Once implemented (and audited, if `audit-plan` runs), the doc moves to `$PLANS_DIR/completed/` — see `implement-plan`/`audit-plan` for when that happens.
 
@@ -56,18 +56,20 @@ git -C "$PLANS_REPO" commit -m "docs: add plan for #NN <slug>" && git -C "$PLANS
 ```
 Then continue with the decision record and relabel below.
 
-**Plans in the project** (`PLANS_REPO` is the project, plans in `docs/plans/`): note the current branch (`git branch --show-current`); after the push below, if it was anything but `main`, `git checkout` it again so the session's next commit doesn't land on `main`. Then unconditionally reset the local `main` to match the remote — **never assume the session's current branch is already an up-to-date `main`**, even mid-session, even if nothing else seemed to touch branches. This has caused real stale-branch pushes before (committing the plan doc onto a leftover `task/*` branch from earlier work in the same session instead of `main`):
-```bash
-git fetch origin main && git checkout -B main origin/main
-```
-`checkout -B` here is deliberate, not `checkout` — it force-resets local `main` to exactly `origin/main`'s tip regardless of what the local `main` pointer currently is or what branch was checked out a moment ago. Only after that: commit and push the plan doc, no confirmation prompt — `git add docs/plans/<file>.md && git commit -m "docs: add plan for #NN
-<slug>" && git push`. This is a standing exception to the never-push-`main` rule (see `global/CLAUDE.md`): plan docs are never wrapped in a PR (see the planning-flow decision in past plans for why), so a direct push to `main` is the only way the doc becomes visible on GitHub — needed so the user can review it away from a machine before approving. Before relabeling, record a resolved decision: if the backing issue's `Decision needed:` line is not `none` and the plan resolves it, set it to `none` and append `Decided: <question> — <answer>` inside the `## Dependencies` block — fetch the body (`gh issue view <NN> --repo <repo> --json body --jq .body > <tmp>`), edit that file, write it back (`gh issue edit <NN> --repo <repo> --body-file <tmp>`); never retype the body, no comment. If the plan doesn't resolve it, leave the line alone. Then relabel the backing issue `status:ready` → `status:planned`:
+**Plans in the project** (`PLANS_REPO` is the project, plans in `docs/plans/`): the plan lives on its task branch and reaches `main` only through that task's PR.
+
+1. Pick the slug once, from the issue title. It names both the branch `task/<NN>-<slug>` and the file `docs/plans/<NN>-<slug>.md` — every later consumer takes the branch from `find-plan.sh`'s `PLAN_BRANCH`, never re-derives it.
+2. Run Start from `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` for `task/<NN>-<slug>` (it branches off `origin/main`, never off whatever is checked out).
+3. Write the doc, then commit and push, no confirmation: `git add docs/plans/<file>.md && git commit -m "docs: add plan for #NN <slug>" && git push -u origin task/<NN>-<slug>`. Never open a PR — a pushed branch without a PR is not In Review; the implementer opens the PR at the end.
+4. Write a `Plan:` line into the issue body, on its own line directly above `## Dependencies` (never inside that block): `Plan: https://github.com/<owner>/<repo>/blob/task/<NN>-<slug>/docs/plans/<NN>-<slug>.md`. Fetch the body (`gh issue view <NN> --repo <repo> --json body --jq .body > <tmp>`), edit that file (replace an existing `Plan:` line rather than adding a second), write it back (`gh issue edit <NN> --repo <repo> --body-file <tmp>`). In-project plans only — a companion plan's URL never goes in an issue.
+
+Before relabeling, record a resolved decision: if the backing issue's `Decision needed:` line is not `none` and the plan resolves it, set it to `none` and append `Decided: <question> — <answer>` inside the `## Dependencies` block — fetch the body (`gh issue view <NN> --repo <repo> --json body --jq .body > <tmp>`), edit that file, write it back (`gh issue edit <NN> --repo <repo> --body-file <tmp>`); never retype the body, no comment. If the plan doesn't resolve it, leave the line alone. Then relabel the backing issue `status:ready` → `status:planned`:
 ```bash
 gh issue edit <NN> --remove-label status:ready --add-label status:planned
 ```
 This is the *only* place that sets `status:planned` — it signals to the user that a plan now exists and needs their review/approval (approval = the user adding `status:ready` themselves, outside this skill — often keeping `status:planned` alongside it; both labels together means "plan reviewed and approved" and is normal, not something to warn about or clean up).
 
-**Same applies to a revision** (see the revising-an-existing-doc rule above), branching on `PLANS_REPO` the same way. In a companion repo: the same `pull --rebase --autostash`, add only the plan file, commit `docs: revise plan for #NN <slug>` and push. In the project, if implementation has started (the plan's branch exists locally or on origin — `task/NN-*`, or `<type>/<slug>` for a plan without an issue), commit the revision on that branch instead: run Start from `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` to land on it, then commit and push (`git commit -m "docs: revise plan for #NN <slug>"`). Pushing to `main` would conflict with the tick-offs already committed on the branch; the revision reaches `main` with the PR. Otherwise run the same `git fetch origin main && git checkout -B main origin/main` reset first, then commit and push straight to `main` with no confirmation, and return to the noted branch as above. No label change needed if the issue is already `status:planned` (with or without `status:ready` alongside it); if the revision comes in while the issue is `status:ready` *without* `status:planned`, that's a pre-existing-plan-doc edge case out of scope for this plan — flag it as an escalation if hit, don't invent new label-swap logic for it here.
+**Same applies to a revision** (see the revising-an-existing-doc rule above), branching on `PLANS_REPO` the same way. In a companion repo: the same `pull --rebase --autostash`, add only the plan file, commit `docs: revise plan for #NN <slug>` and push. In the project: `eval "$("${CLAUDE_PLUGIN_ROOT}/project-patterns/find-plan.sh" <NN>)"`, run Start on `PLAN_BRANCH` (for a legacy plan still on `main`, `PLAN_BRANCH` is empty: use `task/<NN>-<slug>` from the filename), then commit `docs: revise plan for #NN <slug>` and push — whether or not implementation has started. No label change needed if the issue is already `status:planned` (with or without `status:ready` alongside it); if the revision comes in while the issue is `status:ready` *without* `status:planned`, that's a pre-existing-plan-doc edge case out of scope for this plan — flag it as an escalation if hit, don't invent new label-swap logic for it here.
 
 Template — exactly these sections:
 
@@ -75,6 +77,8 @@ Template — exactly these sections:
 # NN — Title
 
 ## Context
+- Source issue: #NN
+
 Why this work exists. Current state, what's wrong, decisions already made (with rationale).
 
 ## Before starting

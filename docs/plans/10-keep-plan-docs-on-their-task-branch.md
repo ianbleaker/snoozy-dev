@@ -40,7 +40,7 @@ Decisions, each with its reason:
     3. In a scratchpad bare repo plus clone, with a pushed `task/5-x` branch holding only `docs/plans/5-x.md`, it prints `PLAN_BRANCH=task/5-x PLAN_ONLY=1`. Adding a second file to that branch gives `PLAN_ONLY=0`, and adding a second `task/5-y` branch gives exit 2.
 
     Never push test branches to this repo's real origin.
-- [ ] **Rewrite `/write-plan`'s commit flow and template, and drop the global exception: `plugins/snoozy-dev/skills/write-plan/SKILL.md`, `global/CLAUDE.md`, `plugins/snoozy-dev/project-patterns/branch-workflow.md`.**
+- [x] **Rewrite `/write-plan`'s commit flow and template, and drop the global exception: `plugins/snoozy-dev/skills/write-plan/SKILL.md`, `global/CLAUDE.md`, `plugins/snoozy-dev/project-patterns/branch-workflow.md`.**
   - In write-plan Phase 2, the in-project flow becomes:
     1. Pick the slug once from the issue title.
     2. Run branch-workflow Start for `task/<NN>-<slug>`.
