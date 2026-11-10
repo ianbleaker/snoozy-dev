@@ -58,7 +58,7 @@ Decisions, each with its reason:
     - `grep -n 'checkout -B main\|straight to .main.\|exception to the never-push' plugins/snoozy-dev/skills/write-plan/SKILL.md global/CLAUDE.md plugins/snoozy-dev/project-patterns/branch-workflow.md` shows only companion-repo lines.
     - `grep -n 'find-plan.sh' plugins/snoozy-dev/skills/write-plan/SKILL.md` has at least one hit.
     - `scripts/verify.sh` passes.
-- [ ] **Route `/next-task` and `/implement-plan` through `find-plan.sh`: `plugins/snoozy-dev/skills/next-task/SKILL.md`, `plugins/snoozy-dev/skills/implement-plan/SKILL.md`.**
+- [x] **Route `/next-task` and `/implement-plan` through `find-plan.sh`: `plugins/snoozy-dev/skills/next-task/SKILL.md`, `plugins/snoozy-dev/skills/implement-plan/SKILL.md`.**
   - next-task step 4 (`size:medium`/`size:large`): replace the `plans-dir.sh` + `ls "$PLANS_DIR"/<NN>-*.md` check with `eval "$(find-plan.sh <NN>)"`. Exit 0 means it exists: hand off `/implement-plan <PLAN_PATH>`. Exit 1 means it doesn't: `/write-plan`. Exit 2: stop and report the duplicate branches. Update the Rules line about never regenerating a plan to match.
   - implement-plan step 0 and step 2:
     - Take `<NN>` from the plan filename and run `find-plan.sh <NN>`.
