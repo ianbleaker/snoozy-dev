@@ -91,7 +91,7 @@ Decisions, each with its reason:
     - `node --check plugins/snoozy-dev/skills/batch-tasks/select-batch.mjs` and `scripts/verify.sh` pass.
     - `select-batch.mjs --dry-run`-style run (`select-batch.mjs 5` with no `--bodies-dir`) from this repo completes without error and lists #10 and #8 with sensible reasons.
     - `grep -n "origin/main:\${planRef" plugins/snoozy-dev/skills/batch-tasks/select-batch.mjs` returns nothing.
-- [ ] **Run `/audit-plan` on the plan's branch: `plugins/snoozy-dev/skills/audit-plan/SKILL.md`.**
+- [x] **Run `/audit-plan` on the plan's branch: `plugins/snoozy-dev/skills/audit-plan/SKILL.md`.**
   - Step 2: the diff is `git diff origin/main...<branch>` on the plan's branch, using `PLAN_BRANCH` from `find-plan.sh <NN>` when set.
   - Step 7: when the PR is still open, the audit section and any `completed/` move are committed on that branch. Keep today's `docs/<slug>-audit` branch rule for after merge.
   - **Done when** `grep -c 'find-plan.sh' plugins/snoozy-dev/skills/audit-plan/SKILL.md` is ≥1 and `scripts/verify.sh` passes.
