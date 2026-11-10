@@ -28,7 +28,7 @@ Decisions, each with its reason:
 
 ## Checklist
 
-- [ ] **Add `plugins/snoozy-dev/project-patterns/find-plan.sh <NN> [--no-fetch]`.** Header comment states usage and output like `plans-dir.sh`. Behaviour:
+- [x] **Add `plugins/snoozy-dev/project-patterns/find-plan.sh <NN> [--no-fetch]`.** Header comment states usage and output like `plans-dir.sh`. Behaviour:
   - It resolves `PLANS_REPO`/`PLANS_DIR` by running `plans-dir.sh` from its own directory, then runs `git fetch -q origin` in each repo it reads, unless `--no-fetch` is passed.
   - **Companion** (`PLANS_DIR` ≠ `$PLANS_REPO/docs/plans`): look in `git -C "$PLANS_REPO" ls-tree -r --name-only origin/main plans/` for `plans/<NN>-*.md`, excluding `plans/completed/`. If found: `PLAN_PATH=$PLANS_DIR/<file>` (absolute), `PLAN_REPO=$PLANS_REPO`, `PLAN_REF=origin/main:plans/<file>`, `PLAN_BRANCH=` (empty), `PLAN_ONLY=0`.
   - **In-project, branch:** `git ls-remote --heads origin "task/<NN>-*"`. With 2 or more matches, print `find-plan: multiple task/<NN>-* branches on origin: …` to stderr and exit 2. With exactly one, look in `git ls-tree -r --name-only origin/<branch> docs/plans/` for `docs/plans/<NN>-*.md`, excluding `docs/plans/completed/`. Do not use `git show` with a glob, because it doesn't expand one. If found: `PLAN_PATH=docs/plans/<file>` (repo-relative), `PLAN_REPO=<project root>`, `PLAN_REF=origin/<branch>:docs/plans/<file>`, `PLAN_BRANCH=<branch>`, `PLAN_ONLY=1` if `git diff --name-only origin/main...origin/<branch>` lists exactly that one plan file, else `0`.
