@@ -125,7 +125,7 @@ function inlineCss(file, seen, externalImports) {
   let css = fs.readFileSync(abs, 'utf8');
   css = css.replace(
     /@import\s+(?:url\(\s*(['"]?)([^'")]+)\1\s*\)|(['"])([^'"]+)\3)\s*([^;]*);/g,
-    (match, _q1, urlRef, _q2, strRef) => {
+    (match, _q1, urlRef, _q2, strRef, qualifier) => {
       const ref = (urlRef || strRef).trim();
       if (isExternal(ref)) {
         // Browsers ignore an @import below any rule, so hoist it to the top.
@@ -137,7 +137,15 @@ function inlineCss(file, seen, externalImports) {
         warn(`@import not found, left as-is: ${ref}`);
         return match;
       }
-      return inlineCss(target, seen, externalImports);
+      const inlined = inlineCss(target, seen, externalImports);
+      const cond = qualifier.trim();
+      if (!cond) return inlined;
+      // Keep the import's media query so e.g. print-only rules stay print-only.
+      if (/^(layer|supports)\b/i.test(cond)) {
+        warn(`@import ${ref} has a layer()/supports() qualifier; inlined without it`);
+        return inlined;
+      }
+      return `@media ${cond} {\n${inlined}}\n`;
     },
   );
   return `/* ${path.relative(process.cwd(), abs)} */\n${inlineUrls(css, dir)}\n`;
