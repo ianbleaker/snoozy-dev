@@ -131,7 +131,7 @@ Once `ci.yml` exists and has run at least once on the repo (so its check name is
 echo '{"required_status_checks":{"strict":false,"contexts":["<exact check name from above>"]},"enforce_admins":true,"required_pull_request_reviews":null,"restrictions":null,"allow_force_pushes":false,"allow_deletions":false}' \
   | gh api --method PUT repos/<owner>/<repo>/branches/main/protection --input -
 ```
-JSON via `--input` because `gh api -f` neither nests dotted keys nor sends a real `null`. `strict` stays `false`: "up to date before merging" blocks every staged PR after the first one `/merge-preview` merges, and it never updates a branch to get past that. Skip protection when plans live in the project (`docs/plans/`, no `Private repo:` line): `/write-plan` pushes plan docs straight to `main`, and a required check would reject them. Private repos on the free plan can't use protection at all.
+JSON via `--input` because `gh api -f` neither nests dotted keys nor sends a real `null`. `strict` stays `false`: "up to date before merging" blocks every staged PR after the first one `/merge-preview` merges, and it never updates a branch to get past that. Plans don't block it: in-project plans reach `main` only through their task's PR, and a companion repo is a separate repo. Private repos on the free plan can't use protection at all.
 
 Same "confirm with the user before mutating a live repo" guard as the other repo-mutation commands in this section. If `ci.yml` was just created in this same onboard run (no commit has triggered it yet), note that this step must wait for the first PR/push to run CI once, and either come back to it or ask the user to re-run this step after that happens — don't block the rest of onboarding on it.
 
