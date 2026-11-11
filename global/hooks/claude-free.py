@@ -2,7 +2,10 @@
 
 Claude Code PreToolUse hook: JSON on stdin, exit 2 with a stderr message to
 block. The rule lives in global/CLAUDE.md. A repo is exempt when a file named
-.claude-free-exempt sits at its top level (snoozy-dev and companion repos).
+.claude-free-exempt sits at its top level (snoozy-dev and companion repos):
+there, messages, titles and bodies are still checked for attribution only
+(Co-Authored-By/Claude-Session trailers, "Generated with Claude Code"), which
+global/CLAUDE.md forbids everywhere.
 
 Checked:
   git commit   -m/--message values and the -F/--file file (broad pattern),
@@ -27,6 +30,10 @@ NARROW = re.compile(
     r"claude\.(ai|com)/|\bCLAUDE\.md\b|(^|[\s/\"'(])\.claude/"
     r"|co-authored-by:.*(claude|anthropic)|generated with \[?claude",
     re.I,
+)
+ATTRIBUTION = re.compile(
+    r"^co-authored-by:.*(claude|anthropic)|^claude-session:|generated with \[claude code\]",
+    re.I | re.M,
 )
 SEPARATORS = {"&&", "||", ";", ";;", "|", "|&", "&", "(", ")", "\n"}
 HEREDOC = re.compile(r"<<-?[ \t]*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
@@ -148,7 +155,7 @@ def flag_values(args, short, long_):
     return out
 
 
-def check_git(cwd, args, bodies, broad, narrow, env):
+def check_git(cwd, args, bodies, broad, narrow, attrib, env):
     sub, i = None, 0
     while i < len(args):
         a = args[i]
@@ -163,11 +170,15 @@ def check_git(cwd, args, bodies, broad, narrow, env):
             sub = a
             break
     rest = args[i + 1:]
-    if sub not in ("commit", "push") or exempt(cwd):
+    if sub not in ("commit", "push"):
         return
+    ex = exempt(cwd)
+    msgs = attrib if ex else broad
     if sub == "commit":
-        broad.extend(flag_values(rest, "m", ["--message"]))
-        broad.extend(read_file(cwd, f, bodies) for f in flag_values(rest, "F", ["--file"]))
+        msgs.extend(flag_values(rest, "m", ["--message"]))
+        msgs.extend(read_file(cwd, f, bodies) for f in flag_values(rest, "F", ["--file"]))
+        if ex:
+            return
         all_ = "--all" in rest or any(a.startswith("-") and not a.startswith("--") and "a" in a[1:].split("m")[0] for a in rest)
         diff = git(cwd, "diff", "HEAD" if all_ else "--cached", "-U0")
         narrow.append(added_lines(diff))
@@ -175,14 +186,14 @@ def check_git(cwd, args, bodies, broad, narrow, env):
         base = "@{u}" if git(cwd, "rev-parse", "--verify", "-q", "@{u}") else "origin/main"
         if git(cwd, "rev-parse", "--verify", "-q", base) is None:
             return
-        broad.append(git(cwd, "log", "--format=%B", f"{base}..HEAD") or "")
-        narrow.append(added_lines(git(cwd, "diff", f"{base}...HEAD")))
+        msgs.append(git(cwd, "log", "--format=%B", f"{base}..HEAD") or "")
+        if not ex:
+            narrow.append(added_lines(git(cwd, "diff", f"{base}...HEAD")))
 
 
 def check_gh(cwd, args, bodies, broad):
+    """broad is the list to fill: the caller passes its attribution list in exempt repos."""
     words = [a for a in args if not a.startswith("-")][:2]
-    if exempt(cwd):
-        return
     if len(words) == 2 and words[0] in ("issue", "pr") and words[1] in GH_ACTIONS:
         broad.extend(flag_values(args, "tb", ["--title", "--body"]))
         broad.extend(read_file(cwd, f, bodies) for f in flag_values(args, "F", ["--body-file"]))
@@ -194,7 +205,7 @@ def check_gh(cwd, args, bodies, broad):
 
 
 def collect_bash(cmd, cwd):
-    broad, narrow, env = [], [], {}
+    broad, narrow, attrib, env = [], [], [], {}
     stripped, bodies = extract_heredocs(cmd)
     for seg in segments(tokenize(stripped)):
         refs = [bodies[int(n)] for n in re.findall(r"__HEREDOC_(\d+)__", " ".join(seg))]
@@ -210,10 +221,10 @@ def collect_bash(cmd, cwd):
         if prog == "cd":
             cwd = resolve(cwd, seg[1] if len(seg) > 1 else "~", env)
         elif prog == "git":
-            check_git(cwd, seg[1:], refs, broad, narrow, env)
+            check_git(cwd, seg[1:], refs, broad, narrow, attrib, env)
         elif prog == "gh":
-            check_gh(cwd, seg[1:], refs, broad)
-    return broad, narrow
+            check_gh(cwd, seg[1:], refs, attrib if exempt(cwd) else broad)
+    return broad, narrow, attrib
 
 
 def collect_mcp(tool_input):
@@ -253,21 +264,22 @@ def main():
     if tool == "Bash":
         cmd = tool_input.get("command", "")
         try:
-            broad, narrow = collect_bash(cmd, cwd)
+            broad, narrow, attrib = collect_bash(cmd, cwd)
         except ValueError:
             # Unparseable (e.g. unbalanced quotes): bash would reject it too, so
             # only block when it is clearly a publishing command that mentions Claude.
-            if re.search(r"\bgit\s+commit\b|\bgh\s+(issue|pr|api)\b", cmd) and not exempt(cwd):
-                broad, narrow = [cmd], []
-            else:
+            if not re.search(r"\bgit\s+commit\b|\bgh\s+(issue|pr|api)\b", cmd):
                 return 0
+            broad, narrow, attrib = ([], [], [cmd]) if exempt(cwd) else ([cmd], [], [])
     elif tool.startswith("mcp__github__"):
-        if exempt(cwd):
-            return 0
         broad, narrow = collect_mcp(tool_input)
+        if exempt(cwd):
+            broad, narrow, attrib = [], [], broad
+        else:
+            attrib = []
     else:
         return 0
-    found = hits(BROAD, broad) + hits(NARROW, narrow)
+    found = hits(BROAD, broad) + hits(NARROW, narrow) + hits(ATTRIBUTION, attrib)
     if not found:
         return 0
     print("Blocked by the Claude-free rule (global/CLAUDE.md): no mention of Claude or "

@@ -59,7 +59,7 @@ What this installs:
 | `global/CLAUDE.md` | Cross-project preferences, kept under 20 lines |
 | `global/settings.snippet.json` | Auto-mode classifier allow-rules (e.g. lets `/sweep-tasks` force-delete a stale local task branch without a confirm prompt), plus the global hooks below |
 | `global/hooks/md-unwrap.py` | PostToolUse hook: after any Write/Edit of a `.md` file, joins hard-wrapped prose so each paragraph or list item is one line (Obsidian renders every source newline as a break). Also runnable by hand: `md-unwrap.py [--check] FILE...` |
-| `global/hooks/claude-free.py` | PreToolUse hook enforcing the Claude-free rule: blocks a `git commit`/`git push`, `gh issue\|pr` create/edit/comment/review/close, `gh api` write or `mcp__github__*` call whose message, title, body or added lines mention Claude (or carry a `Co-Authored-By` trailer or Claude link). Repos with a top-level `.claude-free-exempt` (snoozy-dev, companion repos) are exempt |
+| `global/hooks/claude-free.py` | PreToolUse hook enforcing the Claude-free rule: blocks a `git commit`/`git push`, `gh issue\|pr` create/edit/comment/review/close, `gh api` write or `mcp__github__*` call whose message, title, body or added lines mention Claude (or carry a `Co-Authored-By` trailer or Claude link). Repos with a top-level `.claude-free-exempt` (snoozy-dev, companion repos) are exempt from the mention check but still get attribution blocked (`Co-Authored-By`/`Claude-Session` trailers, "Generated with Claude Code") |
 | `/write-plan` | Spar over findings one at a time, then write a checklist plan doc |
 | `/implement-plan` | Implement a plan doc in order, in scope, checking items off |
 | `/wrap-up` | End of session: reconcile memory, check doc sync, handoff note |
