@@ -33,6 +33,8 @@ Running Start again mid-task is safe: it lands on the existing branch with its c
 
 ## PR — when the planned work is done
 
+**Changelog fragment first, in doc-changelog repos.** If `node "${CLAUDE_PLUGIN_ROOT}/project-patterns/changelog/config.mjs" locate` succeeds and the dir it prints is inside this branch's repo (its `git rev-parse --show-toplevel` equals this repo's), that repo keeps a fragment-based changelog (`${CLAUDE_PLUGIN_ROOT}/project-patterns/changelog/changelog.md`). A config in a nested, separate git repo (e.g. a content repo inside an app checkout) is not this branch's to commit to: skip this step. Before opening the PR, write one fragment per user-facing change in that repo's `fragmentsDir`: `<N>-<slug>.md` on task branches, `<slug>.md` otherwise. Pick the category from the config's `description`s and the areas from `fragments.mjs areas <changed files>`, and write the summary for readers. If nothing is user-facing, write one `skip: true` fragment with a one-line reason instead. Commit them as `docs: add changelog fragment`. `node "${CLAUDE_PLUGIN_ROOT}/project-patterns/changelog/fragments.mjs" --repo <that repo> check` must pass before the PR opens. The user reviews the line in the PR diff. A branch whose change is only fragments (a `/doc-changelog` backfill) or a release (`release.sh --open`) needs no extra fragment.
+
 Once every step is committed and the whole task's verify passes: `gh pr create --base main --head <branch> --title "<conventional title>" --body "<summary>"`. Task branches start the body with `Closes #N`. Body is the summary only (Claude-free rule, `global/CLAUDE.md`). Exactly one PR per branch, and never before the last planned step.
 
 ## Follow-ups

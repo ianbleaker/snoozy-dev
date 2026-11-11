@@ -75,6 +75,9 @@ What this installs:
 | `/merge-preview` | After a passing smoke test, squash-merge every open PR whose exact head is on preview, in one confirmed pass |
 | `/sweep-tasks` | Manual backup: sweep stale local `task/*` and ad hoc branches and reconcile any missed issue-close left behind by a merged PR |
 | `/deploy` | SSH-deploy a named project to its production host via that project's `deploy/deploy.sh` |
+| `/doc-commit` | In a `doc-changelog.json` repo, commit content edits one concern per commit, each with its changelog fragment, after one confirmation |
+| `/doc-changelog` | Backfill changelog fragments for commits made without the flow (asks only on unclear categories), or preview the unreleased notes |
+| `/doc-release` | Cut a fragment-changelog release locally, review it, open the release PR; after merge, tag it and create the GitHub Release |
 | `/go-public` | Publish a private project as a new public repo: plans and Claude config move to a private companion repo with their history, issue/PR text is cleaned, history rewritten, issues transferred keeping their numbers, old repo archived |
 
 If a machine already has a `~/.claude/CLAUDE.md`, merge instead of overwriting.

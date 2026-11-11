@@ -1,0 +1,26 @@
+{
+  "content": ["topics/**", "settings/**"],
+  "categories": [
+    { "id": "rule", "heading": "Rule changes", "description": "The mechanics changed: numbers, costs, must/may, what a roll does. Replacing an old value or behaviour; writing down a value already in effect is wording." },
+    { "id": "wording", "heading": "Wording", "description": "The prose changed, the meaning didn't. Includes correcting a worked example." },
+    { "id": "organization", "heading": "Organization", "description": "Pages or sections moved, nested, reordered or renamed; numbering steps." },
+    { "id": "visual", "heading": "Visual", "description": "Markup or layout changed, the text didn't. Restyling prose into or out of a callout." },
+    { "id": "tooling", "heading": "Tooling", "description": "The change touched no content file.", "collapsed": true }
+  ],
+  "areas": [
+    { "id": "playing-the-game", "label": "Playing the Game", "paths": ["topics/playing-the-game.md"] },
+    { "id": "facing-danger", "label": "Facing Danger", "paths": ["topics/facing-danger.md"] },
+    { "id": "clocks", "label": "Clocks", "paths": ["topics/clocks.md"] },
+    { "id": "prologue", "label": "Prologue: Kickstart the Story", "paths": ["topics/prologue.md"] },
+    { "id": "the-journal", "label": "The Journal", "paths": ["topics/the-journal.md"] },
+    { "id": "welcome", "label": "Welcome to the Wastewilds", "paths": ["topics/welcome-to-the-wastewilds.md"] },
+    { "id": "wastewilds", "label": "Journals over the Wastewilds", "paths": ["settings/wastewilds/**"] }
+  ],
+  "groupBy": "category",
+  "release": {
+    "tagPrefix": "v",
+    "versionFile": "version.json",
+    "beforeCommit": "if [ -f ../../scripts/gen-theme.mjs ]; then node ../../scripts/gen-theme.mjs; else echo 'warning: app checkout not found; Obsidian snippet not regenerated'; fi"
+  },
+  "commit": { "push": true, "verify": "npm test && node validate.mjs" }
+}

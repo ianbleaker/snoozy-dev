@@ -1,0 +1,18 @@
+{
+  "content": ["src/**", "assets/**", "data/**"],
+  "ignore": ["**/*.test.*"],
+  "categories": [
+    { "id": "mechanics", "heading": "Mechanics", "description": "How the game plays: new systems, abilities, rules or controls." },
+    { "id": "balance", "heading": "Balance", "description": "Numbers changed on existing things: damage, costs, drop rates, timers." },
+    { "id": "fixes", "heading": "Bug fixes", "description": "Something behaved wrongly and now behaves as intended." },
+    { "id": "tooling", "heading": "Tooling", "description": "Build, editor or test changes players never see.", "collapsed": true }
+  ],
+  "areas": [
+    { "id": "starting-zone", "label": "Starting zone", "paths": ["data/zones/start/**", "assets/zones/start/**"] },
+    { "id": "wolves", "label": "Wolves", "paths": ["data/mobs/wolf*.json"] },
+    { "id": "ui", "label": "Interface", "paths": ["src/ui/**"] }
+  ],
+  "groupBy": "area>category",
+  "release": { "tagPrefix": "v", "versionFile": "package.json" },
+  "commit": { "push": false, "verify": "npm test" }
+}
