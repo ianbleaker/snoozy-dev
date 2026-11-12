@@ -126,6 +126,8 @@ jobs:
 
 Skip silently if there's no GitHub remote. If CI already exists, don't just ask and stop — check whether its steps actually cover the stack's current verify commands (typecheck/lint/test). Report what's missing or stale (e.g. a test step that was never added, or a command that predates a tsconfig change), then ask before editing — the check-and-report is not optional, only the edit is.
 
+**Cloud:** if `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` exits 1, don't run the branch-protection command below or section 5's label-creation and repo-settings commands (`gh label create`, `gh repo edit`, `gh api -X PATCH repos/…`): print them with `<owner>/<repo>` filled in and tell the user to run them from a CLI session.
+
 Once `ci.yml` exists and has run at least once on the repo (so its check name is known — **do not guess the check name**; fetch it via `gh api repos/<owner>/<repo>/commits/<sha>/check-runs --jq '.check_runs[].name'` against the most recent commit that ran CI), set branch protection on `main` so a red run actually blocks merge (`ci.yml` alone doesn't — it just runs):
 ```bash
 echo '{"required_status_checks":{"strict":false,"contexts":["<exact check name from above>"]},"enforce_admins":true,"required_pull_request_reviews":null,"restrictions":null,"allow_force_pushes":false,"allow_deletions":false}' \

@@ -5,6 +5,8 @@ description: Rebuild the disposable `preview` environment from a group of non-co
 
 Stage one or more in-review task branches onto the shared, disposable `preview` environment for manual smoke testing.
 
+**CLI-only:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` first; if it exits 1, relay its line, say this skill needs a local CLI session (SSH deploy to the preview host and multi-branch merging), and stop before any other step.
+
 ## Steps
 
 1. **Determine the repo.** `git remote get-url origin` (same as `/log-task`).

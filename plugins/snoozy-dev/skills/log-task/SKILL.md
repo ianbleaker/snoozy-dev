@@ -5,6 +5,8 @@ description: Records a finding or idea as a GitHub issue on the current repo's t
 
 Create one GitHub issue on the current repo's tracker, always landing on `status:draft`. Draft is what keeps "Claude noticed this" separate from "user decided to act on it" — draft items never surface in `/next-task`'s list until the user relabels them to `status:ready`.
 
+**Cloud:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` once first; if it exits 1, do every GitHub step below with its cloud form from `${CLAUDE_PLUGIN_ROOT}/project-patterns/environments.md` (same intent, same order).
+
 ## Steps
 
 1. **Determine the repo.** `git remote get-url origin` (or the remote the project's already configured with `gh`). If there's no GitHub remote, stop and tell the caller — there's nowhere to file the issue.

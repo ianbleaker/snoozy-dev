@@ -5,6 +5,8 @@ description: Manual backup skill — sweeps stale local task/* and ad hoc <type>
 
 Backup skill only. Squash-only + `--delete-branch-on-merge` (set by `/onboard`) plus GitHub's native `Closes #NN` handling should close issues automatically on merge — this skill exists for the rare case that misses.
 
+**CLI-only:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` first; if it exits 1, relay its line, say this skill needs a local CLI session (reconciles branches and issues with `gh pr`/`gh issue`), and stop before any other step.
+
 Run `${CLAUDE_PLUGIN_ROOT}/skills/sweep-tasks/sweep.sh` and relay its output verbatim.
 
 ## Rules

@@ -5,6 +5,8 @@ description: Pulls status:ready issues in the current repo, sorted by priority, 
 
 Pull the next unit of work from the current repo's `status:ready` queue and route it to the right workflow.
 
+**Cloud:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` once first; if it exits 1, do every GitHub step below with its cloud form from `${CLAUDE_PLUGIN_ROOT}/project-patterns/environments.md` (same intent, same order). Task branches stay `task/<N>-<slug>`, not the session's `claude/...` branch.
+
 ## Steps
 
 1. **List candidates.**

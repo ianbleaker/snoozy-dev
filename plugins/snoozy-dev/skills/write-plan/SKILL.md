@@ -5,6 +5,8 @@ description: Spar over findings or goals one at a time, then write a checklist p
 
 Produce a plan document through structured sparring, then write it. Two phases — never write the doc while questions remain open.
 
+**Cloud:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` once first; if it exits 1, do every GitHub step below with its cloud form from `${CLAUDE_PLUGIN_ROOT}/project-patterns/environments.md` (same intent, same order).
+
 This skill never leaves its backing issue on `status:draft` — in the standalone case (change 2 below) it relabels straight to `status:ready`. A `/write-plan` run always leaves its backing issue labeled `status:planned` when it finishes.
 
 ## Precondition
