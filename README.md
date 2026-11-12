@@ -11,7 +11,7 @@ git clone https://github.com/ianbleaker/snoozy-dev.git ~/development/snoozy-dev
 ~/development/snoozy-dev/scripts/install-plugin.sh
 ```
 
-The plugin installs from this repo's `stable` branch (the latest release) and auto-updates to each new release at startup. The clone is for SETUP Layer 1 and for developing snoozy-dev itself. The script needs `jq`.
+The plugin installs from this repo's `stable` branch (the latest release) and auto-updates to each new release at startup. The clone is for SETUP Layer 1 and for developing snoozy-dev itself. The script needs `jq`. The plugin ships the global Claude-free and md-unwrap hooks; re-running the script after updating to a release with plugin hooks removes the old `global/hooks/*.py` entries from `~/.claude/settings.json`.
 
 Then tell Claude:
 

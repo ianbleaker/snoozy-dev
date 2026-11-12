@@ -52,12 +52,14 @@ jq -s '.[0] * .[1]' ~/.claude/settings.json ~/development/snoozy-dev/global/sett
   > /tmp/settings.merged.json && mv /tmp/settings.merged.json ~/.claude/settings.json
 ```
 
+Older versions of the snippet also wired the Claude-free and md-unwrap hooks to `global/hooks/*.py` in this checkout. That merge never deletes keys, so re-running `scripts/install-plugin.sh` after updating to a release with plugin hooks removes those old global hook entries.
+
 What this installs:
 
 | Piece | Purpose |
 | --- | --- |
 | `global/CLAUDE.md` | Cross-project preferences, kept under 20 lines |
-| `global/settings.snippet.json` | Auto-mode classifier allow-rules (e.g. lets `/sweep-tasks` force-delete a stale local task branch without a confirm prompt), plus the global hooks below |
+| `global/settings.snippet.json` | Auto-mode classifier allow-rules only (e.g. lets `/sweep-tasks` force-delete a stale local task branch without a confirm prompt). The two hooks below ship in the plugin's `hooks/hooks.json` |
 | `plugins/snoozy-dev/hooks/md-unwrap.py` | PostToolUse hook: after any Write/Edit of a `.md` file, joins hard-wrapped prose so each paragraph or list item is one line (Obsidian renders every source newline as a break). Also runnable by hand: `python3 plugins/snoozy-dev/hooks/md-unwrap.py [--check] FILE...` |
 | `plugins/snoozy-dev/hooks/claude-free.py` | PreToolUse hook enforcing the Claude-free rule: blocks a `git commit`/`git push`, `gh issue\|pr` create/edit/comment/review/close, `gh api` write or `mcp__github__*` call whose message, title, body or added lines mention Claude (or carry a `Co-Authored-By` trailer or Claude link). Repos with a top-level `.claude-free-exempt` (snoozy-dev, companion repos) are exempt from the mention check but still get attribution blocked (`Co-Authored-By`/`Claude-Session` trailers, "Generated with Claude Code") |
 | `/write-plan` | Spar over findings one at a time, then write a checklist plan doc |
