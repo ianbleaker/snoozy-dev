@@ -54,14 +54,28 @@ jobs:
             fi
           done
           git push origin preview --force-with-lease
-      - name: Deploy preview
-        run: |
-          # Host/remote path parsed from this project's CLAUDE.md
-          # `## Deploy` section, same convention as deploy-scripts.md.
-          ssh "$DEPLOY_HOST" "cd $PREVIEW_REMOTE_PATH && sudo ./deploy/preview-deploy.sh"
+      - name: Load the deploy key and pin the host key
         env:
-          SSH_AUTH_SOCK: ${{ /* configured via a prior ssh-agent step using
-            the PREVIEW_DEPLOY_SSH_KEY secret */ '' }}
+          SSH_KEY: ${{ secrets.PREVIEW_DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.PREVIEW_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          # Pinned host key (`ssh-keyscan <host>` output, checked once by
+          # hand), so the job never trusts whatever answers on first use.
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          ssh-add - <<<"$SSH_KEY"
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
+      - name: Deploy preview
+        env:
+          DEPLOY_HOST: ${{ secrets.PREVIEW_DEPLOY_HOST }}
+        run: |
+          # Preview checkout: the `Preview path:` rule from deploy-scripts.md
+          # (default <Remote path>-preview). The ci-preview account's forced
+          # command runs exactly this anyway, whatever is sent here.
+          ssh -o StrictHostKeyChecking=yes "ci-preview@$DEPLOY_HOST" \
+            "cd /opt/<repo>-preview && sudo -n -u <repo>-preview-deployer ./deploy/preview-deploy.sh"
+          echo "PREVIEW_URL=http://$DEPLOY_HOST:<preview-port>" >> "$GITHUB_ENV"
       - name: Report deployment status
         env:
           GH_TOKEN: ${{ github.token }}
@@ -74,13 +88,27 @@ jobs:
             -f state="success" -f environment_url="$PREVIEW_URL"
 ```
 
-The SSH-agent setup step and `$PREVIEW_URL` value are per-project detail, same as `deploy-scripts.md`'s existing host/path parameterization — not fully spelled out here, adapted at onboard-offer time.
+The host never appears in the workflow file: it comes from the `PREVIEW_DEPLOY_HOST` repo secret, which also fills the `{host}` part of `$PREVIEW_URL` (the CI runner has no `~/.ssh/config` alias to resolve it from). The checkout path, deployer name and port are per-project detail, same as `deploy-scripts.md`'s parameterization, adapted at onboard-offer time.
 
 Reporting status via the GitHub Deployments API (rather than a plain issue comment) is the point of Tier 1 over the manual skill: it shows up natively on the PR (checkmark + environment link) instead of being invisible to GitHub.
 
 ## Secret convention
 
-`PREVIEW_DEPLOY_SSH_KEY` — a **repo secret**, not org-level (smallest blast radius per repo), holding the private key for the preview host's deploy user. This is a one-time manual setup step per project — `/onboard`'s offer should note it needs to be set before the workflow can succeed, and can't verify it was set (secrets aren't readable via API).
+Three **repo secrets**, not org-level (smallest blast radius per repo):
+
+- `PREVIEW_DEPLOY_SSH_KEY`: the private key for a dedicated `ci-preview` account on the host, never a person's account.
+- `PREVIEW_DEPLOY_HOST`: the host's address.
+- `PREVIEW_DEPLOY_KNOWN_HOSTS`: the host's pinned `known_hosts` line(s).
+
+The `ci-preview` account is created once by hand, like a person's account (`deploy-scripts.md` "Host access"): `useradd -m -s /bin/sh -G deploy ci-preview`. Its login shell must be a real shell, because a forced command runs through it. Its `~ci-preview/.ssh/authorized_keys` holds exactly one line:
+
+```
+restrict,command="cd /opt/<repo>-preview && sudo -n -u <repo>-preview-deployer ./deploy/preview-deploy.sh" <public key>
+```
+
+Why: `restrict` takes away the shell, port/agent/X11 forwarding and a pty, and the forced command ignores whatever command the client sends. A leaked CI key can only redeploy preview. It can't reach prod either, even though the `deploy` group's sudoers rule would allow that, because it can never run any other command.
+
+Setting the secrets and the account is a one-time manual step per project — `/onboard`'s offer should note it needs to be done before the workflow can succeed, and can't verify it was (secrets aren't readable via API).
 
 ## Relationship to `/stage-preview`
 
