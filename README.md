@@ -11,6 +11,8 @@ git clone https://github.com/ianbleaker/snoozy-dev.git ~/development/snoozy-dev
 ~/development/snoozy-dev/scripts/install-plugin.sh
 ```
 
+The plugin installs from this repo's `stable` branch (the latest release) and auto-updates to each new release at startup. The clone is for SETUP Layer 1 and for developing snoozy-dev itself. The script needs `jq`.
+
 Then tell Claude:
 
 > Read ~/development/snoozy-dev/SETUP.md and apply Layer 1.
@@ -27,8 +29,7 @@ This repo is a Claude Code plugin marketplace (`.claude-plugin/marketplace.json`
 2. Set the environment's **setup script** to:
 
    ```bash
-   git clone -q --depth 1 https://github.com/ianbleaker/snoozy-dev.git ~/development/snoozy-dev \
-     && ~/development/snoozy-dev/scripts/install-plugin.sh
+   curl -fsSL https://raw.githubusercontent.com/ianbleaker/snoozy-dev/main/scripts/install-plugin.sh | bash
    ```
 
 3. Start a session; skills are available as `/snoozy-dev:<name>`, e.g. `/snoozy-dev:onboard`. Use one environment for all repos you want this in.
