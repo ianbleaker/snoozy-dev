@@ -65,12 +65,31 @@ for (const f of mainFiles) {
   byBase.set(b, byBase.has(b) ? null : f); // null = ambiguous basename
 }
 
-const ready = JSON.parse(sh('gh', ['issue', 'list', '--repo', repo, '--label', 'status:ready', '--state', 'open',
-  '--limit', '200', '--json', 'number,title,labels,body']));
-const openIssues = new Set(JSON.parse(sh('gh', ['issue', 'list', '--repo', repo, '--state', 'open',
-  '--limit', '1000', '--json', 'number'])).map((i) => i.number));
-const openPrs = JSON.parse(sh('gh', ['pr', 'list', '--repo', repo, '--state', 'open',
-  '--limit', '200', '--json', 'headRefName,closingIssuesReferences']));
+// Cloud sessions reject `gh issue`/`gh pr` but allow `gh api` REST
+// (project-patterns/environments.md): same data, same shapes.
+let cloud = false;
+try { sh(patterns('cloud-check.sh'), []); } catch { cloud = true; }
+// Paginated REST list; jq emits one JSON value per line.
+const rest = (path, jq) => sh('gh', ['api', '--paginate', path, '--jq', jq])
+  .split('\n').filter(Boolean).map((l) => JSON.parse(l));
+const notPr = 'select(.pull_request | not)';
+// REST has no closingIssuesReferences: read `Closes #N`-style keywords from the PR body.
+const closes = '[(.body // "") | scan("(?i)\\\\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?) #([0-9]+)") | {number: (.[0] | tonumber)}]';
+
+const ready = cloud
+  ? rest(`repos/${repo}/issues?state=open&labels=status:ready&per_page=100`,
+    `.[] | ${notPr} | {number, title, labels: [.labels[] | {name}], body: (.body // "")}`)
+  : JSON.parse(sh('gh', ['issue', 'list', '--repo', repo, '--label', 'status:ready', '--state', 'open',
+    '--limit', '200', '--json', 'number,title,labels,body']));
+const openIssues = new Set(cloud
+  ? rest(`repos/${repo}/issues?state=open&per_page=100`, `.[] | ${notPr} | .number`)
+  : JSON.parse(sh('gh', ['issue', 'list', '--repo', repo, '--state', 'open',
+    '--limit', '1000', '--json', 'number'])).map((i) => i.number));
+const openPrs = cloud
+  ? rest(`repos/${repo}/pulls?state=open&per_page=100`,
+    `.[] | {headRefName: .head.ref, closingIssuesReferences: ${closes}}`)
+  : JSON.parse(sh('gh', ['pr', 'list', '--repo', repo, '--state', 'open',
+    '--limit', '200', '--json', 'headRefName,closingIssuesReferences']));
 const inReview = new Set(openPrs
   .map((p) => p.headRefName.match(/^task\/(\d+)-/)?.[1]).filter(Boolean).map(Number));
 // Issues that already have an open PR (task branch or `Closes #N`) — never re-batch.
