@@ -1,0 +1,22 @@
+{
+  "content": ["plugins/**", "global/**", "scripts/install-plugin.sh", "README.md", "SETUP.md", ".claude-plugin/**"],
+  "ignore": ["**/*.test.mjs", "**/testutil.mjs"],
+  "categories": [
+    { "id": "feature", "heading": "New", "description": "A new skill, agent, hook or project pattern, or a new capability in an existing one." },
+    { "id": "change", "heading": "Changed", "description": "An existing skill, hook or script now behaves differently on purpose: different steps, defaults, output or rules." },
+    { "id": "fix", "heading": "Fixed", "description": "Something was broken or contradicted its own docs, and now works as documented." },
+    { "id": "docs", "heading": "Docs", "description": "Only wording, SETUP/README or pattern prose changed; no skill or script behaves differently.", "collapsed": true }
+  ],
+  "areas": [
+    { "id": "task-flow", "label": "Task flow", "paths": ["plugins/snoozy-dev/skills/{brainstorm,next-task,log-task,write-plan,implement-plan,audit-plan,batch-tasks,sweep-tasks,fix-bug,wrap-up}/**", "plugins/snoozy-dev/agents/**", "plugins/snoozy-dev/project-patterns/{branch-workflow.md,task-labels.md,find-plan.sh,plans-dir.sh,review-rubric.md}"] },
+    { "id": "preview-deploy", "label": "Preview and deploy", "paths": ["plugins/snoozy-dev/skills/{stage-preview,merge-preview,deploy}/**", "plugins/snoozy-dev/project-patterns/{deploy-scripts.md,preview-workflow.md,smoke-driver.*}"] },
+    { "id": "doc-changelog", "label": "Doc changelog", "paths": ["plugins/snoozy-dev/skills/doc-*/**", "plugins/snoozy-dev/project-patterns/changelog/**"] },
+    { "id": "ui", "label": "UI patterns", "paths": ["plugins/snoozy-dev/skills/ui-consistency-pass/**", "plugins/snoozy-dev/project-patterns/{mockup-kit.*,architecture-docs.md}"] },
+    { "id": "cloud", "label": "Cloud sessions", "paths": ["plugins/snoozy-dev/project-patterns/{cloud-check.sh,environments.md}"] },
+    { "id": "publishing", "label": "Going public", "paths": ["plugins/snoozy-dev/skills/go-public/**", "global/hooks/claude-free.py"] },
+    { "id": "setup", "label": "Setup and onboarding", "paths": ["plugins/snoozy-dev/skills/onboard/**", "global/**", "scripts/install-plugin.sh", "README.md", "SETUP.md", ".claude-plugin/**", "plugins/snoozy-dev/.claude-plugin/**"] }
+  ],
+  "groupBy": "category",
+  "release": { "tagPrefix": "v", "versionFile": "plugins/snoozy-dev/.claude-plugin/plugin.json" },
+  "commit": { "verify": "scripts/verify.sh" }
+}
