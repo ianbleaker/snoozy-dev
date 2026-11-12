@@ -8,6 +8,8 @@
 
 set -euo pipefail
 
+DEPLOY_DOC="$(cd "$(dirname "$0")/../.." && pwd)/project-patterns/deploy-scripts.md"
+
 if [[ $# -ne 1 ]]; then
   echo "Usage: run-deploy.sh <project-name>" >&2
   exit 1
@@ -23,7 +25,7 @@ fi
 
 if [[ ! -f "${CHECKOUT}/deploy/deploy.sh" ]]; then
   echo "Error: ${PROJECT} hasn't adopted the deploy-scripts convention yet (no deploy/deploy.sh)." >&2
-  echo "See project-patterns/deploy-scripts.md." >&2
+  echo "See ${DEPLOY_DOC}." >&2
   exit 1
 fi
 
@@ -45,7 +47,7 @@ missing=()
 
 if [[ ${#missing[@]} -gt 0 ]]; then
   echo "Error: ${PROJECT}'s CLAUDE.md ## Deploy section is missing: ${missing[*]}." >&2
-  echo "See project-patterns/deploy-scripts.md." >&2
+  echo "See ${DEPLOY_DOC}." >&2
   exit 1
 fi
 

@@ -17,4 +17,4 @@ Deploy a project's current `main` to its production host via its own `deploy/dep
 - No rollback or retry logic — `deploy.sh` already commits to "no silent rollback"; this skill must not paper over that.
 - No `AskUserQuestion` confirmation gate before the SSH/restart step — running `/deploy <project-name>` is itself the deliberate signal.
 - Never invoke `setup.sh` or any first-time-bootstrap path from this skill, even if `deploy.sh` fails in a way that looks like "the service isn't installed yet" — report and stop.
-- No new remote-execution mechanism — plain SSH per `project-patterns/deploy-scripts.md`.
+- No new remote-execution mechanism — plain SSH per `${CLAUDE_PLUGIN_ROOT}/project-patterns/deploy-scripts.md`.
