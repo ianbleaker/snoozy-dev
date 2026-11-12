@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 // Scrubs GIT_* and isolates git config (tests may run under pre-commit).
-import { makeRepo } from '../project-patterns/changelog/testutil.mjs'
+import { makeRepo } from '../project-patterns/testutil.mjs'
 
 const RUNNER = path.join(path.dirname(new URL(import.meta.url).pathname), 'verify-runner.mjs')
 

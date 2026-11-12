@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 // Scrubs GIT_* and isolates git config (tests may run under pre-commit).
-import { makeRepo, tmpDir } from '../project-patterns/changelog/testutil.mjs'
+import { makeRepo, tmpDir } from '../project-patterns/testutil.mjs'
 
 const HERE = path.dirname(new URL(import.meta.url).pathname)
 const CHECK = path.join(HERE, 'onboard-check.mjs')
