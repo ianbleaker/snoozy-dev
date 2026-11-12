@@ -5,6 +5,8 @@ description: Implement a checklist plan document (migration/plan doc) in order, 
 
 Implement the plan document at the given path. The doc is the contract: its checklist is the scope, its "Do not do" section is binding.
 
+**Cloud:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` once first; if it exits 1, do every GitHub step below with its cloud form from `${CLAUDE_PLUGIN_ROOT}/project-patterns/environments.md` (same intent, same order).
+
 ## Steps
 
 0. **Resolve the plans location.** `eval "$("${CLAUDE_PLUGIN_ROOT}/project-patterns/plans-dir.sh")"` sets `PLANS_DIR` and `PLANS_REPO`. When `PLANS_REPO` is a private companion repo (the project's `CLAUDE.md` has a `Private repo:` line), every plan-doc change — tick-offs, `## Discovered`/`## Escalation` notes, the archive move — is committed and pushed in the companion, straight to its `main` and never part of the project's diff: `git -C "$PLANS_REPO" pull --rebase --autostash origin main`, `git -C "$PLANS_REPO" add plans/<f>` (only the plan file), commit, push. Don't `checkout -B` there: it would discard unpushed local `CLAUDE.md` commits.

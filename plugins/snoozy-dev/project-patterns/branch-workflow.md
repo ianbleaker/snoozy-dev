@@ -2,6 +2,8 @@
 
 Every task that changes tracked files — a GitHub issue, a plan doc, or a direct chat request — runs on its own branch, commits per step, and ends in exactly one PR. None of it needs per-instance confirmation, since it never touches `main`. Never commit to or push `main` directly; the only exception is private companion repos (see `global/CLAUDE.md`). Plan docs are no exception: `/write-plan` commits them to their `task/<NN>-<slug>` branch, and they reach `main` through that task's PR.
 
+**Cloud:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` once first; if it exits 1, do every GitHub step below with its cloud form from `${CLAUDE_PLUGIN_ROOT}/project-patterns/environments.md` (same intent, same order).
+
 A companion repo (`Private repo:` line) never gets branches or PRs. Plans, tick-offs, audits and its `CLAUDE.md`/`.claude/` (symlinked into the project) commit straight to its `main` after `git -C <companion> pull --rebase --autostash origin main`. Only the project repo runs this workflow, so no change is ever merged twice.
 
 ## Name

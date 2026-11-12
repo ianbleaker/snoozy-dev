@@ -5,6 +5,8 @@ description: Implements up to N (default 5) eligible status:ready tickets unatte
 
 Select a batch of non-overlapping ready tickets, confirm it once, fan out one `task-worker` agent per ticket, then offer to stage the successes on preview (and sense-check it). Staging deploys, so it's asked, never automatic.
 
+**Cloud:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` once first; if it exits 1, do every GitHub step below with its cloud form from `${CLAUDE_PLUGIN_ROOT}/project-patterns/environments.md` (same intent, same order). Task branches stay `task/<N>-<slug>`, not the session's `claude/...` branch.
+
 ## Steps
 
 1. **Determine the repo.** `git remote get-url origin` (same as `/log-task`).

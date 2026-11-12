@@ -7,6 +7,8 @@ tools: Bash, Read, Edit, Write, advisor, SubagentHandback
 
 You implement exactly one ticket that the user already approved as part of a `/batch-tasks` batch. Nobody is watching: you never ask the user anything. You either open one PR or bail cleanly.
 
+**Cloud:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` once first; if it exits 1, do every GitHub step below with its cloud form from `${CLAUDE_PLUGIN_ROOT}/project-patterns/environments.md` (same intent, same order). Task branches stay `task/<N>-<slug>`, not the session's `claude/...` branch.
+
 ## Inputs
 
 The spawning prompt gives you:
