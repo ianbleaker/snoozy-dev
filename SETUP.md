@@ -9,11 +9,11 @@ git clone https://github.com/ianbleaker/snoozy-dev.git ~/development/snoozy-dev
 ~/development/snoozy-dev/scripts/install-plugin.sh
 ```
 
-Skills then appear namespaced (`/snoozy-dev:onboard`, …). Then, for a local machine, apply Layer 1 below (CLAUDE.md + settings snippet), and in each project run `/snoozy-dev:onboard`.
+Skills then appear namespaced (`/snoozy-dev:onboard`, …). Then, for a local machine, apply Layer 1 below (CLAUDE.md + settings snippet). In each project, the plugin offers `/snoozy-dev:onboard` at session start when the repo isn't set up or its setup is behind the plugin; running it by hand is the fallback.
 
 **Claude Code in the Cloud:** cloud sessions do **not** install plugins that a repo declares in `.claude/settings.json` (`enabledPlugins` / `extraKnownMarketplaces` are ignored there), and `~/.claude` isn't carried over. Add the install to the cloud environment's **setup script** instead — see the README section "Adding this to a cloud session". Which skills work in cloud, and the `gh api` forms they use there: `plugins/snoozy-dev/project-patterns/environments.md`.
 
-Plugins can't ship `global/CLAUDE.md` or the settings snippet — those remain Layer 1 (local) only. In cloud repos, put anything from `global/CLAUDE.md` you need into the repo's own CLAUDE.md.
+Plugins can't ship `global/CLAUDE.md` or the settings snippet's auto-mode rules — those remain Layer 1 (local) only. The global hooks (Claude-free, md-unwrap) ship in the plugin's `hooks/hooks.json`, so they run in cloud too. In cloud repos, put anything from `global/CLAUDE.md` you need into the repo's own CLAUDE.md.
 
 ---
 
@@ -86,16 +86,16 @@ If a machine already has a `~/.claude/CLAUDE.md`, merge instead of overwriting.
 
 ---
 
-## Layer 2 — Per project (run `/onboard` in the repo)
+## Layer 2 — Per project (`/onboard`, offered at session start)
 
-`/onboard` detects the stack and writes `.claude/settings.json` plus a project CLAUDE.md skeleton. The hook snippets live inside the onboard skill (`plugins/snoozy-dev/skills/onboard/SKILL.md`) — single source of truth. Summary:
+The plugin's session-start check offers `/onboard` when a GitHub repo has no `.snoozy-dev.json`, an invalid one, or an onboard schema stamp behind the plugin's (`plugins/snoozy-dev/skills/onboard/schema.json`); declining is remembered per repo outside it. Running `/onboard` by hand is the fallback. It detects the stack and writes a tracked `.snoozy-dev.json` (verify commands + stamp), `.claude/settings.json` (permissions only) plus a project CLAUDE.md skeleton; the generic hooks ship in the plugin, so fixes to them reach every repo on release. Details live in the onboard skill (`plugins/snoozy-dev/skills/onboard/SKILL.md`) — single source of truth. Summary:
 
-1. **Verify hooks.** Per-edit incremental typecheck (immediate feedback, ~1–2 s) plus a Stop hook running typecheck and lint on changed files as the final gate. Catching a type error right after the edit that caused it is cheap; untangling five stacked edits at end of turn is not.
+1. **Verify hooks.** The plugin runs the commands in `.snoozy-dev.json`: a per-edit incremental typecheck (`verify.edit`, ~1–2 s, failures fed back to Claude as context) plus a Stop check (`verify.stop`, typecheck and lint on changed files) that sends Claude back once on failure. Catching a type error right after the edit that caused it is cheap; untangling five stacked edits at end of turn is not.
 2. **Permissions baseline.** Read-only commands (`git status/log/diff`, `ls`, `grep`/`rg`, `find`, …) allowlisted so sessions don't stall on prompts. For an existing project with history, `/fewer-permission-prompts` can mine transcripts instead.
 3. **Project CLAUDE.md skeleton.** Sections: one-line purpose, hard invariants, pointers to reference docs, doc-sync table (edited file → which living doc to update), verify commands, plan-doc location.
 4. **Safety rules.** Permissions deny-list for secrets reads and force-pushes, ask-list for destructive commands. Weaker models make these mistakes more often; the rules cost zero tokens and apply identically to every model.
-5. **Git pre-commit gate.** A real `.git/hooks/pre-commit` running the verify commands. The Stop hook is *feedback*; this is the *gate* — it protects the durable action regardless of which model, session, or human is committing.
-6. **CI workflow.** If the repo has a GitHub remote: a minimal Actions workflow running the verify commands on push/PR. The strongest model-independent check of all — it catches whatever every hook, model, and human missed.
+5. **Git pre-commit gate.** A real `.git/hooks/pre-commit` running `verify.gate` from `.snoozy-dev.json`. The Stop hook is *feedback*; this is the *gate* — it protects the durable action regardless of which model, session, or human is committing.
+6. **CI workflow.** If the repo has a GitHub remote: a minimal Actions workflow running `verify.gate` on push/PR. The strongest model-independent check of all — it catches whatever every hook, model, and human missed.
 7. **Task tracking bootstrap.** Create the `type:*`/`priority:*`/`size:*`/`status:*` labels (`plugins/snoozy-dev/project-patterns/task-labels.md`) on the repo if missing — task *status* lives in the `status:*` labels. Retires the old per-project "open questions" doc — task capture now goes through `/log-task`/`/next-task` against GitHub Issues instead.
 
 **Project CLAUDE.md diet:** invariants and pointers, never reference content. A vocabulary table or data-model description belongs in `docs/` with a one-line pointer from CLAUDE.md. Budget: ~60 lines.
