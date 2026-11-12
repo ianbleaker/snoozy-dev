@@ -1,7 +1,7 @@
 """Scan a repo for traces of Claude: history on every ref (including refs/pull/*), PRs and issues.
 
 Used by /go-public steps 2, 5 and 9 (see SKILL.md next to this file). Uses the
-broad pattern from global/hooks/claude-free.py. Clones into <workdir>, which is
+broad pattern from plugins/snoozy-dev/hooks/claude-free.py. Clones into <workdir>, which is
 replaced; the temporary refs/audit/* refs live only in that clone.
 
 Usage: python3 -I audit.py <owner/repo | /path/to/local/repo> <workdir> [--no-gh]

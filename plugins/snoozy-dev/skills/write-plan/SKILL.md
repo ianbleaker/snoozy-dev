@@ -25,7 +25,7 @@ This sets `PLANS_DIR` and `PLANS_REPO` (absolute paths): `<companion>/plans` and
 4. Links to mockups, artifacts or brainstorm pages produced while sparring go in the plan's Context, never in the issue (Claude-free rule, `global/CLAUDE.md`). The issue refers to "the plan for #NN".
 5. Items the user defers accumulate in memory (title + one-line reason), not the checklist. At the end of Phase 1, before Phase 2 writing begins, present them in one `AskUserQuestion` call (multiSelect, one option per candidate). Call `/log-task` for each approved item. The doc's Context section records only a `- Deferred: logged as #NN - <title>` list item per approved item — nothing for rejected ones, which are dropped.
 
-If the plan's raw material came from a `/next-task` hand-off, the Context section must also include a `- Source issue: #NN` list item (the issue `/next-task` handed off) so `implement-plan` knows what to close later. `Source issue:` and `Deferred:` are always `- ` list items, because `global/hooks/md-unwrap.py` joins plain consecutive lines into one paragraph.
+If the plan's raw material came from a `/next-task` hand-off, the Context section must also include a `- Source issue: #NN` list item (the issue `/next-task` handed off) so `implement-plan` knows what to close later. `Source issue:` and `Deferred:` are always `- ` list items, because `plugins/snoozy-dev/hooks/md-unwrap.py` joins plain consecutive lines into one paragraph.
 
 **Issue backing (end of Phase 1, after the deferred-items checkpoint, before Phase 2 writing begins):** every plan doc must be backed by a GitHub issue labeled `status:ready`.
 

@@ -17,7 +17,7 @@ Run from the project's main checkout. Every step is outward-facing and not idemp
 
 ## Patterns
 
-The same patterns as `global/hooks/claude-free.py` (case-insensitive):
+The same patterns as `plugins/snoozy-dev/hooks/claude-free.py` (case-insensitive):
 
 - **Broad** (messages, titles, bodies, comments, authors, blobs): `\b(claude|anthropic)\b|co-authored-by|claude\.(ai|com)/`
 

@@ -13,8 +13,8 @@
     { "id": "doc-changelog", "label": "Doc changelog", "paths": ["plugins/snoozy-dev/skills/doc-*/**", "plugins/snoozy-dev/project-patterns/changelog/**"] },
     { "id": "ui", "label": "UI patterns", "paths": ["plugins/snoozy-dev/skills/ui-consistency-pass/**", "plugins/snoozy-dev/project-patterns/{mockup-kit.*,architecture-docs.md}"] },
     { "id": "cloud", "label": "Cloud sessions", "paths": ["plugins/snoozy-dev/project-patterns/{cloud-check.sh,environments.md}"] },
-    { "id": "publishing", "label": "Going public", "paths": ["plugins/snoozy-dev/skills/go-public/**", "global/hooks/claude-free.py"] },
-    { "id": "setup", "label": "Setup and onboarding", "paths": ["plugins/snoozy-dev/skills/onboard/**", "global/**", "scripts/install-plugin.sh", "README.md", "SETUP.md", ".claude-plugin/**", "plugins/snoozy-dev/.claude-plugin/**"] }
+    { "id": "publishing", "label": "Going public", "paths": ["plugins/snoozy-dev/skills/go-public/**", "plugins/snoozy-dev/hooks/claude-free.py"] },
+    { "id": "setup", "label": "Setup and onboarding", "paths": ["plugins/snoozy-dev/skills/onboard/**", "global/**", "scripts/install-plugin.sh", "README.md", "SETUP.md", ".claude-plugin/**", "plugins/snoozy-dev/.claude-plugin/**", "plugins/snoozy-dev/hooks/**"] }
   ],
   "groupBy": "category",
   "release": { "tagPrefix": "v", "versionFile": "plugins/snoozy-dev/.claude-plugin/plugin.json",
