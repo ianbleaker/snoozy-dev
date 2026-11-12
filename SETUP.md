@@ -52,7 +52,7 @@ jq -s '.[0] * .[1]' ~/.claude/settings.json ~/development/snoozy-dev/global/sett
   > /tmp/settings.merged.json && mv /tmp/settings.merged.json ~/.claude/settings.json
 ```
 
-Older versions of the snippet also wired the Claude-free and md-unwrap hooks to `global/hooks/*.py` in this checkout. That merge never deletes keys, so re-running `scripts/install-plugin.sh` after updating to a release with plugin hooks removes those old global hook entries.
+Older versions of the snippet also wired the Claude-free and md-unwrap hooks to scripts in this checkout. That merge never deletes keys, so re-running `scripts/install-plugin.sh` after updating to a release with plugin hooks removes those old global hook entries.
 
 What this installs:
 
