@@ -1,66 +1,66 @@
 ---
 name: onboard
-description: Set up a project for efficient Claude Code work - detect the stack, write .claude/settings.json with verify hooks and a read-only permissions baseline, and scaffold a minimal project CLAUDE.md. Use when joining a new project or when the user asks to onboard/set up Claude for a repo.
+description: Set up or upgrade a project for efficient Claude Code work - detect the stack, write .snoozy-dev.json (verify commands the plugin's hooks run, plus the onboard schema stamp), a read-only permissions baseline, the pre-commit gate and CI, and a minimal project CLAUDE.md. Reads the stamp first and, when it is behind the plugin, applies only the newer schema changes. Use when joining a new project, when the plugin's session-start check offers it, or when the user asks to onboard/set up Claude for a repo.
 ---
 
 Instantiate the per-project layer of the snoozy-dev repo's `SETUP.md` (https://github.com/ianbleaker/snoozy-dev/blob/main/SETUP.md). Never overwrite existing config — merge, and ask before replacing anything the user wrote.
 
-**Idempotent by design.** Re-running this on an already-onboarded project must not treat "something with the right name exists" as "done." For each of steps 2–4, if the artifact already exists: verify it still does its job (prove it against a deliberate failure, or check its commands match the stack detected in step 1) before moving on. Fix drift found this way directly — that's different from *creating* something new, which still follows the merge/ask rules above.
+**Plugin-side vs per-repo.** The plugin's `hooks/hooks.json` ships everything generic: the edit/Stop verify runner (`hooks/verify-runner.mjs`, which feeds failures back to Claude), the session-start onboard check, and the global Claude-free and md-unwrap hooks. A repo keeps only data and what can't live in a plugin: a tracked root `.snoozy-dev.json` (verify commands + `onboardSchema` stamp), the permissions baseline and any repo-specific hooks in `.claude/settings.json`, the pre-commit gate and `ci.yml` (both run `verify.gate`), CLAUDE.md, plan dirs, and the one-time GitHub settings. At session start the plugin's `hooks/onboard-check.mjs` offers this skill when `.snoozy-dev.json` is missing, invalid or behind; running it by hand stays the fallback (e.g. a forced re-run).
+
+**Maintainer rule:** when a step here changes what lands in a repo, bump `schema.json` next to this file and add its `changes` entry.
+
+**Idempotent by design.** Re-running this on an already-onboarded project must not treat "something with the right name exists" as "done." For each of steps 2a–4, if the artifact already exists: verify it still does its job (prove it against a deliberate failure, or check its commands match the stack detected in step 1) before moving on. Fix drift found this way directly — that's different from *creating* something new, which still follows the merge/ask rules above.
+
+## 0. Read the stamp
+
+Read `.snoozy-dev.json` at the repo root and `${CLAUDE_PLUGIN_ROOT}/skills/onboard/schema.json`.
+- **No file** → full onboard: every step below.
+- **`onboardSchema` behind the manifest's `schema`** → upgrade mode: apply only the `changes` entries newer than the stamp (list them to the user first), plus the idempotent verify of everything else that the steps below already do.
+- **Current** → verify-only re-run of every step.
+- **Invalid JSON** → show the error, then treat it as no file, merging what's still readable.
 
 ## 1. Detect the stack
 
 Check for `package.json` + `tsconfig.json` (TypeScript), `pyproject.toml`/`requirements.txt` (Python), `Cargo.toml` (Rust), `go.mod` (Go). Note the test runner and linter actually configured (don't assume).
 
-## 2. Write `.claude/settings.json`
+## 2a. Write `.snoozy-dev.json`
 
-Merge into any existing file. Two hooks plus a permissions baseline.
-
-**Verify hooks (TypeScript example — adapt the commands per the table below):**
+Tracked, at the repo root (not under `.claude/`: in companion-backed repos `.claude` is a symlink into the private repo and excluded, so cloud clones would miss it). The plugin's verify runner reads it; every key except `onboardSchema` is optional:
 
 ```json
 {
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "f=$(jq -r '.tool_input.file_path // \"\"'); echo \"$f\" | grep -qE '\\.(ts|tsx)$' && cd \"$CLAUDE_PROJECT_DIR\" && npx tsc --noEmit --incremental --tsBuildInfoFile .claude/.tsbuildinfo 2>&1 | tail -5 || true",
-            "timeout": 30,
-            "statusMessage": "Type-checking..."
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && npx tsc --noEmit --incremental --tsBuildInfoFile .claude/.tsbuildinfo 2>&1 | tail -3; { git diff --name-only HEAD; git ls-files -o --exclude-standard; } | grep -E '\\.(ts|tsx)$' | head -20 | xargs -r npx eslint 2>&1 | tail -10 || true",
-            "timeout": 60,
-            "statusMessage": "Final type-check + lint..."
-          }
-        ]
-      }
-    ]
+  "onboardSchema": 1,
+  "verify": {
+    "edit": [{ "pattern": "\\.(ts|tsx)$", "command": "npx tsc --noEmit --incremental --tsBuildInfoFile .claude/.tsbuildinfo", "timeout": 30 }],
+    "stop": { "command": "npx tsc --noEmit --incremental --tsBuildInfoFile .claude/.tsbuildinfo && { git diff --name-only --diff-filter=d HEAD; git ls-files -o --exclude-standard; } | grep -E '\\.(ts|tsx)$' | xargs -r npx eslint", "timeout": 120 },
+    "gate": "npx tsc --noEmit && npx eslint . --quiet && npm test --silent -- --run"
   }
 }
 ```
 
-Add `.claude/.tsbuildinfo` to `.gitignore`.
+- `edit`: entries whose `pattern` (JS regex) matches the edited path run after each Write/Edit; the path is in `$FILE` (never splice it into the command). Failures go to Claude as context and never block.
+- `stop`: runs at Stop when the tree has uncommitted changes; a failure sends Claude back once.
+- `gate`: the full check the pre-commit hook and CI run (step 3–4).
+- `timeout` is in seconds (defaults: edit 30, stop 120). Write `onboardSchema` last (step 9).
 
-| Stack | Per-edit check (fast, changed file's language) | Stop check (final gate) |
-| --- | --- | --- |
-| TypeScript | `npx tsc --noEmit --incremental` | tsc + eslint on changed files |
-| Python | `ruff check <file>` | `ruff check` + `pyright` on changed files |
-| Rust | `cargo check --quiet 2>&1 \| tail -10` | `cargo check` + `cargo clippy --quiet` |
-| Go | `go vet ./... 2>&1 \| tail -10` | `go vet` + `go build ./...` |
+Add `.claude/.tsbuildinfo` to `.gitignore` for TypeScript.
 
-Principles: per-edit hooks must be fast (incremental, single-file where possible) and truncated (`tail`); Stop hooks are the thorough gate; always `|| true` so a tooling failure never blocks the session; only hook languages the repo contains.
+| Stack | `edit` (fast, changed file's language) | `stop` (final check) | `gate` |
+| --- | --- | --- | --- |
+| TypeScript | `\.(ts\|tsx)$` → `npx tsc --noEmit --incremental --tsBuildInfoFile .claude/.tsbuildinfo` | tsc + eslint on changed files (example above) | `npx tsc --noEmit && npx eslint . --quiet && npm test --silent -- --run` |
+| Python | `\.py$` → `ruff check "$FILE"` | `ruff check . && pyright` | `ruff check . && pyright && pytest -q` |
+| Rust | `\.rs$` → `cargo check --quiet` | `cargo check --quiet && cargo clippy --quiet -- -D warnings` | stop + `&& cargo test --quiet` |
+| Go | `\.go$` → `go vet ./...` | `go vet ./... && go build ./...` | stop + `&& go test ./...` |
 
-**Trap — verify the check actually checks.** If `tsconfig.json` is solution-style (`"files": []` + `references`, the Vite template default), plain `tsc --noEmit` compiles *nothing* and always passes — use `npx tsc -b` instead (build mode; composite projects are already incremental, no extra flags). Before wiring any verify hook, prove it fails: introduce a deliberate error and confirm non-zero/error output. **This applies just as much to hooks already present as to ones you're about to write** — a hook that existed before this session doesn't get a pass just because its name is right; run the same prove-it-fails check on it and fix the command if it's a no-op.
+Principles: every command must **exit non-zero on failure** — no `| tail` (the runner keeps the last 20 lines) and no `|| true` (the runner never fails the session itself). `edit` commands must be fast (incremental, single-file where possible); `stop` is the thorough check; only cover languages the repo contains.
+
+**Trap — verify the check actually checks.** If `tsconfig.json` is solution-style (`"files": []` + `references`, the Vite template default), plain `tsc --noEmit` compiles *nothing* and always passes — use `npx tsc -b` instead (build mode; composite projects are already incremental, no extra flags). Before writing any command, prove it fails: introduce a deliberate error, run the command (`FILE=<path> sh -c '<edit command>'`, `sh -c '<stop command>'`, `sh -c '<gate>'`), confirm a non-zero exit, then revert the error. **This applies just as much to commands already in `.snoozy-dev.json`** — run the same prove-it-fails check on them on every re-run and fix any no-op.
+
+## 2b. Write `.claude/settings.json`
+
+Merge into any existing file. It holds the permissions baseline only (plugins can't ship permissions, and the per-repo copy also works in cloud), plus any repo-specific hooks the user already has.
+
+**Migration:** if it holds generic edit/Stop verify hooks — a PostToolUse `Edit|Write` or a Stop hook whose command type-checks, lints, syntax-checks or runs a verify script — the plugin now runs these from `.snoozy-dev.json`, and leaving them makes verify run twice. Show the user each one's translation into `verify.edit`/`verify.stop` (drop its `jq` file-matching into `pattern`, its `| tail` and `|| true`, use `$FILE`), prove the translation fails on a deliberate error, and ask before removing the old hook. Leave every other hook (e.g. a custom guard script) untouched. When `.claude` is a symlink into a companion repo, the change commits to the companion's `main` (step 9).
 
 **Permissions baseline** (read-only allows; deny for secrets and history rewrites; ask for destructive commands):
 
@@ -87,24 +87,23 @@ Add the stack's read-only commands to `allow` (`npx tsc --noEmit*`, `npm test*`,
 
 ## 3. Git pre-commit gate
 
-Write `.git/hooks/pre-commit` running the stack's verify commands (if husky or `core.hooksPath` is configured, extend that instead). TypeScript example:
+Write `.git/hooks/pre-commit` running `verify.gate` (if husky or `core.hooksPath` is configured, extend that instead):
 
 ```sh
 #!/bin/sh
 set -e
 cd "$(git rev-parse --show-toplevel)"
-npx tsc --noEmit --incremental --tsBuildInfoFile .claude/.tsbuildinfo
-npx eslint . --quiet
-npm test --silent -- --run 2>&1 | tail -20
+gate=$(jq -er '.verify.gate' .snoozy-dev.json) || { echo "no verify.gate in .snoozy-dev.json" >&2; exit 1; }
+sh -c "$gate"
 ```
 
-`chmod +x .git/hooks/pre-commit`. If the test suite is slow (>~60 s), gate on typecheck + lint only and leave tests to CI. `.git/hooks` isn't versioned — fine for solo work; use husky when collaborators need the gate too.
+Use `jq -er`, not `jq -r … // empty`: a missing key, file or `jq` would otherwise become `sh -c ""` and silently pass — a no-op gate. `chmod +x .git/hooks/pre-commit`. If the test suite is slow (>~60 s), leave tests out of `gate` and add a separate CI step for them. `.git/hooks` isn't versioned — fine for solo work; use husky when collaborators need the gate too.
 
-If a pre-commit hook already exists, don't assume it still works: read it, check its commands match what step 1 detected (right typecheck invocation for the current tsconfig shape, right test runner), and prove it blocks a deliberate error before trusting it. Fix stale commands directly; only ask before replacing a hook that does something unrelated to verification.
+If a pre-commit hook already exists, don't assume it still works: read it. One that runs its own copy of the verify commands is migrated to the form above (show the diff; the commands move into `verify.gate`). Prove it blocks a deliberate error before trusting it. Only ask before replacing a hook that does something unrelated to verification.
 
 ## 4. CI workflow (if the repo has a GitHub remote)
 
-The strongest model-independent check: catches whatever every hook, model, and human missed. Create `.github/workflows/ci.yml` with the verify commands (TypeScript example — adapt per stack):
+The strongest model-independent check: catches whatever every hook, model, and human missed. Create `.github/workflows/ci.yml` running `verify.gate`, after the stack's setup and install steps (TypeScript example — adapt per stack):
 
 ```yaml
 name: ci
@@ -119,12 +118,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: npx tsc --noEmit
-      - run: npx eslint . --quiet
-      - run: npm test -- --run
+      - run: gate=$(jq -er .verify.gate .snoozy-dev.json) && sh -c "$gate"
 ```
 
-Skip silently if there's no GitHub remote. If CI already exists, don't just ask and stop — check whether its steps actually cover the stack's current verify commands (typecheck/lint/test). Report what's missing or stale (e.g. a test step that was never added, or a command that predates a tsconfig change), then ask before editing — the check-and-report is not optional, only the edit is.
+A failed command substitution doesn't fail `sh -c`, so the step assigns `gate` first and chains with `&&` (`jq` is preinstalled on GitHub's Ubuntu runners). Skip silently if there's no GitHub remote. If CI already exists, don't just ask and stop — check whether it runs `verify.gate` (or, before migration, whether its own steps cover the stack's current typecheck/lint/test). Report what's missing or stale, then ask before editing — the check-and-report is not optional, only the edit is.
 
 **Cloud:** if `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` exits 1, don't run the branch-protection command below or section 5's label-creation and repo-settings commands (`gh label create`, `gh repo edit`, `gh api -X PATCH repos/…`): print them with `<owner>/<repo>` filled in and tell the user to run them from a CLI session.
 
@@ -216,6 +213,10 @@ If CLAUDE.md already exists, don't recreate it — but check its Plans and Doc-s
 - The deploy-scripts convention (`${CLAUDE_PLUGIN_ROOT}/project-patterns/deploy-scripts.md`): if the repo has no `deploy/` folder yet, offer the full four-script scaffold (`setup.sh`, `deploy.sh`, `preview-setup.sh`, `preview-deploy.sh`, a `.service` unit template), following the deployer privilege model: a deployer-owned checkout, a sudoers drop-in installed by `setup.sh`/`preview-setup.sh`, and a `deploy.sh` that never needs root beyond the one `systemctl restart`. Remind the user to add the `- Preview URL: http://{host}:<port>` line to `## Deploy` once `preview-setup.sh` has run and printed its port, plus an optional `- Preview check:` smoke command (see deploy-scripts.md). If `deploy/setup.sh`/`deploy.sh` already exist, leave them untouched — offer only the two preview scripts (`preview-setup.sh`, `preview-deploy.sh`) alongside — and if `setup.sh` predates the privilege split (no sudoers drop-in, or a `chown -R` to the service user), say so in one line, pointing at deploy-scripts.md, without editing it.
 - When `deploy/preview-setup.sh` and `deploy/preview-deploy.sh` already exist (or are being scaffolded in the same step), also offer the Tier 1 preview- automation workflow described in `${CLAUDE_PLUGIN_ROOT}/project-patterns/preview-workflow.md` (`.github/workflows/preview.yml`) — don't auto-create, same offer-don't- create posture as the rest of this step.
 
-## 9. Report
+## 9. Stamp and commit
 
-List what was created/merged, what was verified and left as-is, what was fixed because it had drifted, and the offers from step 8.
+Write or update `onboardSchema` in `.snoozy-dev.json` to the manifest's `schema`, merging into the existing file. Then commit per `${CLAUDE_PLUGIN_ROOT}/project-patterns/branch-workflow.md` on `chore/onboard-schema-<N>` (one commit per step that changed tracked files) and open its PR. Changes behind a companion `.claude` symlink (e.g. removing migrated hooks from `.claude/settings.json`) commit straight to the companion's `main` instead, never into the project's branch. `.git/hooks/pre-commit` is untracked, and GitHub settings aren't files: nothing to commit for them.
+
+## 10. Report
+
+List what was created/merged, what was verified and left as-is, what was fixed because it had drifted, the schema changes applied (from the manifest's `changes`, in upgrade mode), and the offers from step 8.
