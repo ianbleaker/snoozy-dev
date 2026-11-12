@@ -39,7 +39,7 @@ Rules of thumb:
 
 ## Layer 1 — Global (install once per machine)
 
-Symlink CLAUDE.md so this repo stays the source of truth. (Skills and the agent are installed by the plugin — symlinking them won't work, since they rely on `${CLAUDE_PLUGIN_ROOT}`; re-run `scripts/install-plugin.sh` to pick up edits.)
+Symlink CLAUDE.md so this repo stays the source of truth. (Skills and the agent are installed by the plugin — symlinking them won't work, since they rely on `${CLAUDE_PLUGIN_ROOT}`. The plugin comes from the `stable` branch on GitHub and auto-updates to each release, so local edits never reach it; see Maintenance below for trying unreleased skills.)
 
 ```bash
 ln -sf ~/development/snoozy-dev/global/CLAUDE.md ~/.claude/CLAUDE.md
@@ -172,6 +172,6 @@ The artifacts are the bridge between tiers: the planner writes docs assuming a l
 
 ## Maintenance
 
-- This repo is versioned; commit every change. CLAUDE.md edits propagate via the symlink; skill edits need `scripts/install-plugin.sh` re-run (or `/plugin marketplace update`).
+- This repo is versioned; commit every change. CLAUDE.md edits propagate via the symlink; skill edits reach other repos only through a release: installs track the `stable` branch, which `/doc-release` fast-forwards on publish, and marketplace auto-update picks up each new version at startup. To try unreleased skills, start a session with `claude --plugin-dir ~/development/snoozy-dev/plugins/snoozy-dev`, which silently overrides the installed copy. `claude plugin list` still shows the marketplace one, so confirm with `claude --debug` (log line `Plugin "snoozy-dev" from --plugin-dir overrides installed version`). `SNOOZY_DEV_REF=<branch> scripts/install-plugin.sh` installs another branch instead (testing); re-run without it to return to `stable`.
 - Review `global/CLAUDE.md` occasionally: anything that has grown past a line or two should move into a skill or a hook.
 - When a project invents a pattern worth reusing (a good hook, a driver, a workflow), generalize it into `plugins/snoozy-dev/project-patterns/` or a global skill here.
