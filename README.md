@@ -34,7 +34,7 @@ This repo is a Claude Code plugin marketplace (`.claude-plugin/marketplace.json`
 
 3. Start a session; skills are available as `/snoozy-dev:<name>`, e.g. `/snoozy-dev:onboard`. Use one environment for all repos you want this in.
 
-Steps 1–3 are configured in the claude.ai UI, not in this repo. Status: the plugin install and `${CLAUDE_PLUGIN_ROOT}` substitution are verified locally; the setup-script path in a real cloud environment is **not yet verified** — if it fails, check that the setup script runs as the same user/home the session uses and that the plugin still shows in `/help` after environment caching.
+Steps 1–3 are configured in the claude.ai UI, not in this repo. Status: the GitHub install, migration from a directory install, and auto-update to a new version are verified locally; the curl setup-script path in a real cloud environment is **not yet verified** — if it fails, check that the setup script runs as the same user/home the session uses and that the plugin still shows in `/help` after environment caching.
 
 ### What works in cloud
 
