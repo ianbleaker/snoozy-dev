@@ -15,7 +15,7 @@ export const CONFIG_FILE = 'doc-changelog.json'
 const ID_RE = /^[a-z0-9-]+$/
 const GROUP_BY = ['category', 'area', 'area>category']
 const TOP_KEYS = ['content', 'ignore', 'fragmentsDir', 'changelog', 'categories', 'areas', 'groupBy', 'commitUrl', 'release', 'commit']
-const RELEASE_DEFAULTS = { tagPrefix: 'v', versionFile: null, beforeCommit: null }
+const RELEASE_DEFAULTS = { tagPrefix: 'v', versionFile: null, beforeCommit: null, stableBranch: null }
 const COMMIT_DEFAULTS = { push: false, verify: null }
 
 export class ConfigError extends Error {}
@@ -75,6 +75,7 @@ export function validateConfig(raw, repoDir) {
   }
   const release = sub('release', RELEASE_DEFAULTS)
   if (typeof release.tagPrefix !== 'string') fail('`release.tagPrefix` must be a string')
+  if (release.stableBranch !== null && !(isStr(release.stableBranch) && release.stableBranch !== 'main')) fail('`release.stableBranch` must be null or a branch name other than `main`')
   const commit = sub('commit', COMMIT_DEFAULTS)
   if (typeof commit.push !== 'boolean') fail('`commit.push` must be true or false')
   return {

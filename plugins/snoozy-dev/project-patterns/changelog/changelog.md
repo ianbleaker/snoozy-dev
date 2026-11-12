@@ -56,6 +56,7 @@ The body is one paragraph, the summary readers see: present tense, about what ch
 | `release.tagPrefix` | `"v"` | Tags and headings are `<tagPrefix>X.Y.Z`. |
 | `release.versionFile` | `null` | JSON file with a `version` key, bumped at cut. A `releasedAt` key, if present, is set to the release date. Other keys are kept. `null` takes the version from the highest tag. |
 | `release.beforeCommit` | `null` | Shell command run from the repo root during cut. Whatever it changes joins the release commit. |
+| `release.stableBranch` | `null` | Branch fast-forwarded to each published release commit. `null` = off. Never `main`. |
 | `commit.push` | `false` | `/doc-commit` pushes the current branch after its one confirmation. |
 | `commit.verify` | `null` | Shell command that must pass before `/doc-commit` commits. |
 

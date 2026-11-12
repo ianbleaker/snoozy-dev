@@ -19,7 +19,7 @@ test('defaults', () => {
   assert.deepEqual(cfg.areas, [])
   assert.equal(cfg.groupBy, 'category')
   assert.equal(cfg.commitUrl, null)
-  assert.deepEqual(cfg.release, { tagPrefix: 'v', versionFile: null, beforeCommit: null })
+  assert.deepEqual(cfg.release, { tagPrefix: 'v', versionFile: null, beforeCommit: null, stableBranch: null })
   assert.deepEqual(cfg.commit, { push: false, verify: null })
 })
 
@@ -35,6 +35,9 @@ test('validation errors name the key', () => {
     [{ categories: CATS, colour: 'red' }, /unknown key `colour`/],
     [{ categories: CATS, release: { prefix: 'v' } }, /unknown key `release\.prefix`/],
     [{ categories: [{ id: 'a' }] }, /`categories\[0\]\.heading` is required/],
+    [{ categories: CATS, release: { stableBranch: 'main' } }, /`release\.stableBranch` must be null or a branch name/],
+    [{ categories: CATS, release: { stableBranch: '' } }, /`release\.stableBranch` must be null or a branch name/],
+    [{ categories: CATS, release: { stableBranch: true } }, /`release\.stableBranch` must be null or a branch name/],
   ]
   for (const [raw, re] of cases) assert.throws(() => v(raw), (e) => e instanceof ConfigError && re.test(e.message), JSON.stringify(raw))
 })
@@ -45,6 +48,10 @@ test('CLI exits 1 naming the key on an invalid config', () => {
   const res = spawnSync('node', [path.join(HERE, 'config.mjs'), 'show', '--repo', dir], { encoding: 'utf8' })
   assert.equal(res.status, 1)
   assert.match(res.stderr, /`groupBy`/)
+})
+
+test('release.stableBranch accepts a branch name', () => {
+  assert.equal(v({ categories: CATS, release: { stableBranch: 'stable' } }).release.stableBranch, 'stable')
 })
 
 test('GitHub commit URL from ssh and https origins', () => {
