@@ -108,7 +108,7 @@ snoozy's task flow writes fragments too. In a repo with `doc-changelog.json`, `b
 2. Review: `git show --stat HEAD` and `fragments.mjs notes X.Y.Z`. To revise, `release.sh --undo` (allowed while the branch is unpushed) returns to `main`, deletes the branch, and restores the backfilled fragments `main` doesn't track, uncommitted. Edit, then cut again.
 3. `release.sh --open` pushes the branch and opens the PR `chore: release <tagPrefix>X.Y.Z`, with the notes as its body.
 4. The user merges the PR. Fragments merged while it was open roll into the next release.
-5. `release.sh --publish` finds the newest release commit on `origin/main` (subject optionally followed by ` (#N)`). If its tag isn't on origin, it tags it, pushes the tag, and creates the GitHub Release from that commit's changelog section. With `DRY_RUN=1` it only reports what it would publish: exit 0 if there is something to publish, 1 if not.
+5. `release.sh --publish` finds the newest release commit on `origin/main` (subject optionally followed by ` (#N)`). If its tag isn't on origin, it tags it, pushes the tag, and creates the GitHub Release from that commit's changelog section. With `release.stableBranch` set, it then fast-forwards that branch on origin to the release commit (creating it on the first publish, never forcing); if that push is refused, the tag and Release stay published and it exits with the command to run by hand. With `DRY_RUN=1` it only reports what it would publish: exit 0 if there is something to publish, 1 if not.
 
 ## Tuning loop
 

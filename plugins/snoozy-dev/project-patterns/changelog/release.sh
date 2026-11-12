@@ -13,7 +13,9 @@
 #       push the release branch and open its PR with the release notes.
 #   release.sh [--repo <dir>] --publish
 #       after the PR merged: tag the newest untagged release commit on
-#       origin/main, push the tag, create the GitHub Release.
+#       origin/main, push the tag, create the GitHub Release; with
+#       release.stableBranch set, fast-forward that branch on origin to the
+#       release commit (created on the first publish; never forced).
 #
 # --repo defaults to `config.mjs locate` from the current directory.
 # DRY_RUN=1 prints each step and changes nothing; for cut, failed
@@ -47,6 +49,7 @@ VERSION_FILE="$(get release.versionFile)"
 BEFORE="$(get release.beforeCommit)"
 FRAG_DIR="$(get fragmentsDir)"
 CHANGELOG="$(get changelog)"
+STABLE="$(get release.stableBranch)"
 UNDO="$(git rev-parse --absolute-git-dir)/doc-changelog-undo"
 frag() { node "$HERE/fragments.mjs" --repo "$REPO" "$@"; }
 
@@ -143,7 +146,7 @@ if [ "$MODE" = "--publish" ]; then
   fi
   TAG="$PREFIX$VERSION"
   echo "=== Publishing $TAG at ${SHA:0:7}"
-  if [ -n "$DRY" ]; then echo "  would tag ${SHA:0:7} as $TAG, push it and create the GitHub Release"; exit 0; fi
+  if [ -n "$DRY" ]; then echo "  would tag ${SHA:0:7} as $TAG, push it and create the GitHub Release${STABLE:+ and fast-forward $STABLE}"; exit 0; fi
   if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
     [ "$(git rev-parse "$TAG^{commit}")" = "$SHA" ] || die "local tag $TAG points elsewhere"
   else
@@ -155,6 +158,12 @@ if [ "$MODE" = "--publish" ]; then
   frag notes "$VERSION" --file "$CL" > "$NOTES"
   git push --quiet origin "refs/tags/$TAG"
   gh release create "$TAG" --title "$TAG" --notes-file "$NOTES"
+  if [ -n "$STABLE" ]; then
+    # Fast-forward only: no --force, no +refspec. A first publish creates the branch.
+    git push --quiet origin "$SHA:refs/heads/$STABLE" \
+      || die "$TAG is published, but $STABLE could not be fast-forwarded to it. Fix $STABLE on origin, then run by hand: git push origin $SHA:refs/heads/$STABLE"
+    echo "Fast-forwarded $STABLE to $TAG."
+  fi
   echo "Done: $TAG published."
   exit 0
 fi

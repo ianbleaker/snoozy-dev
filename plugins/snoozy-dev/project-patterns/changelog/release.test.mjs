@@ -9,9 +9,9 @@ const CONFIG = { ...BASIC, release: { versionFile: 'version.json', beforeCommit:
 
 // A clone of a bare origin: config + version.json tagged v1.0.0, then one
 // content commit with its fragment, all pushed. `gh` is a stub that logs.
-function setup() {
+function setup(config = CONFIG) {
   const r = makeRepo({ origin: true })
-  r.commit('chore: init', { 'doc-changelog.json': JSON.stringify(CONFIG), 'version.json': '{ "version": "1.0.0", "releasedAt": "2026-01-01" }\n' })
+  r.commit('chore: init', { 'doc-changelog.json': JSON.stringify(config), 'version.json': '{ "version": "1.0.0", "releasedAt": "2026-01-01" }\n' })
   r.git('tag', 'v1.0.0')
   r.commit('feat: wolves', { 'mobs/wolf.md': 'grr', 'changes/wolves.md': fragment({ category: 'mechanics', area: 'wolves' }, 'Wolves arrive.') })
   r.git('push', '-q', 'origin', 'main', 'v1.0.0')
@@ -147,3 +147,29 @@ for (const suffix of ['', ' (#7)']) {
     refuses(s.release(['--publish'], { DRY_RUN: '1' }), /Nothing to publish/)
   })
 }
+
+test('publish with release.stableBranch creates the branch at the release commit, then fast-forwards it', () => {
+  const s = setup({ ...CONFIG, release: { ...CONFIG.release, stableBranch: 'stable' } })
+  const merge = () => {
+    ok(s.release(['cut', 'patch']))
+    s.git('push', '-q', 'origin', 'HEAD:main')
+    const sha = s.git('rev-parse', 'HEAD')
+    s.git('switch', '-q', 'main')
+    s.git('merge', '-q', '--ff-only', 'origin/main')
+    return sha
+  }
+  const first = merge()
+  const dry = s.release(['--publish'], { DRY_RUN: '1' })
+  ok(dry)
+  assert.match(dry.stdout, /and fast-forward stable/)
+  assert.equal(s.originGit('branch', '--list', 'stable'), '')
+  ok(s.release(['--publish']))
+  assert.equal(s.originGit('rev-parse', 'stable'), first)
+
+  s.commit('feat: bears', { 'mobs/bear.md': 'roar', 'changes/bears.md': fragment({ category: 'mechanics', area: 'wolves' }, 'Bears arrive.') })
+  s.git('push', '-q', 'origin', 'main')
+  const second = merge()
+  ok(s.release(['--publish']))
+  assert.equal(s.originGit('rev-parse', 'v1.0.2^{commit}'), second)
+  assert.equal(s.originGit('rev-parse', 'stable'), second)
+})
