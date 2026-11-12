@@ -1,5 +1,13 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/onboard-check.mjs\"", "timeout": 10 }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash|mcp__github__.*",
@@ -12,7 +20,15 @@
       {
         "matcher": "Write|Edit|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "python3 -I \"${CLAUDE_PLUGIN_ROOT}/hooks/md-unwrap.py\" --hook", "timeout": 10 }
+          { "type": "command", "command": "python3 -I \"${CLAUDE_PLUGIN_ROOT}/hooks/md-unwrap.py\" --hook", "timeout": 10 },
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/verify-runner.mjs\" edit", "timeout": 120, "statusMessage": "Verifying..." }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/verify-runner.mjs\" stop", "timeout": 600, "statusMessage": "Final verify..." }
         ]
       }
     ]
