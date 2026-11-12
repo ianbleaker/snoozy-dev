@@ -1,0 +1,8 @@
+{
+  "onboardSchema": 1,
+  "verify": {
+    "edit": [{ "pattern": "\\.(sh|mjs|py)$", "command": "scripts/verify.sh \"$FILE\"", "timeout": 30 }],
+    "stop": { "command": "VERIFY_FAST=1 scripts/verify.sh", "timeout": 120 },
+    "gate": "scripts/verify.sh"
+  }
+}
