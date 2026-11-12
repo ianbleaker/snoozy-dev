@@ -35,4 +35,13 @@ This repo is a Claude Code plugin marketplace (`.claude-plugin/marketplace.json`
 
 Steps 1–3 are configured in the claude.ai UI, not in this repo. Status: the plugin install and `${CLAUDE_PLUGIN_ROOT}` substitution are verified locally; the setup-script path in a real cloud environment is **not yet verified** — if it fails, check that the setup script runs as the same user/home the session uses and that the plugin still shows in `/help` after environment caching.
 
+### What works in cloud
+
+In cloud, `gh` is authenticated through a proxy that rejects `gh issue`/`gh pr`, while `gh api` REST calls get through. Skills detect this with `project-patterns/cloud-check.sh` and switch to the REST forms in [`project-patterns/environments.md`](plugins/snoozy-dev/project-patterns/environments.md).
+
+- **Cloud-capable (GitHub workflows):** `/next-task`, `/log-task`, `/write-plan`, `/implement-plan`, `/batch-tasks` (and its `task-worker` agent), plus the branch workflow and task labels they use.
+- **CLI-only, stop with a message:** `/deploy`, `/stage-preview`, `/merge-preview`, `/sweep-tasks`, `/go-public`. `/doc-release` cuts the release, then stops before opening the PR and publishing. `/onboard` prints its label, branch-protection and repo-settings commands for you to run from a CLI.
+- **Companion repos:** a project with a `Private repo:` line keeps plans in a sibling checkout that isn't in the cloud container, so plan work there needs a local session. Projects using `docs/plans/` are unaffected.
+- **Status:** the cloud forms follow the cloud-environments docs and are **not yet verified** in a real cloud session.
+
 For a local machine, run `scripts/install-plugin.sh` and see [SETUP.md](SETUP.md).

@@ -11,7 +11,7 @@ git clone https://github.com/ianbleaker/snoozy-dev.git ~/development/snoozy-dev
 
 Skills then appear namespaced (`/snoozy-dev:onboard`, …). Then, for a local machine, apply Layer 1 below (CLAUDE.md + settings snippet), and in each project run `/snoozy-dev:onboard`.
 
-**Claude Code in the Cloud:** cloud sessions do **not** install plugins that a repo declares in `.claude/settings.json` (`enabledPlugins` / `extraKnownMarketplaces` are ignored there), and `~/.claude` isn't carried over. Add the install to the cloud environment's **setup script** instead — see the README section "Adding this to a cloud session".
+**Claude Code in the Cloud:** cloud sessions do **not** install plugins that a repo declares in `.claude/settings.json` (`enabledPlugins` / `extraKnownMarketplaces` are ignored there), and `~/.claude` isn't carried over. Add the install to the cloud environment's **setup script** instead — see the README section "Adding this to a cloud session". Which skills work in cloud, and the `gh api` forms they use there: `plugins/snoozy-dev/project-patterns/environments.md`.
 
 Plugins can't ship `global/CLAUDE.md` or the settings snippet — those remain Layer 1 (local) only. In cloud repos, put anything from `global/CLAUDE.md` you need into the repo's own CLAUDE.md.
 
