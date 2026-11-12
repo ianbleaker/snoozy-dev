@@ -16,10 +16,10 @@ if [[ $# -ne 1 ]]; then
 fi
 
 PROJECT="$1"
-CHECKOUT="$HOME/development/${PROJECT}"
+CHECKOUT="${SNOOZY_PROJECTS_DIR:-$HOME/development}/${PROJECT}"
 
 if [[ ! -d "$CHECKOUT" ]]; then
-  echo "Error: checkout not found at ${CHECKOUT}." >&2
+  echo "Error: checkout not found at ${CHECKOUT} (projects root: SNOOZY_PROJECTS_DIR, default \$HOME/development)." >&2
   exit 1
 fi
 
@@ -36,13 +36,12 @@ if [[ "$AHEAD" -ne 0 ]]; then
   exit 1
 fi
 
-CLAUDE_MD="${CHECKOUT}/CLAUDE.md"
-DEPLOY_SECTION="$(awk '/^## Deploy/{flag=1; next} /^## /{flag=0} flag' "$CLAUDE_MD" 2>/dev/null || true)"
-HOST="$(echo "$DEPLOY_SECTION" | awk -F': *' '/^Host:/{print $2}')"
-REMOTE_PATH="$(echo "$DEPLOY_SECTION" | awk -F': *' '/^Remote path:/{print $2}')"
+# Assigned first so a deploy-config.sh failure (joined lines) stops here.
+DEPLOY_CONFIG="$("$(dirname "$0")/../../project-patterns/deploy-config.sh" "$CHECKOUT")"
+eval "$DEPLOY_CONFIG"
 
 missing=()
-[[ -z "$HOST" ]] && missing+=("Host")
+[[ -z "$DEPLOY_HOST" ]] && missing+=("Host")
 [[ -z "$REMOTE_PATH" ]] && missing+=("Remote path")
 
 if [[ ${#missing[@]} -gt 0 ]]; then
@@ -52,7 +51,7 @@ if [[ ${#missing[@]} -gt 0 ]]; then
 fi
 
 set +e
-OUTPUT="$(ssh "$HOST" "cd ${REMOTE_PATH} && sudo ./deploy/deploy.sh" 2>&1)"
+OUTPUT="$(ssh "$DEPLOY_HOST" "cd ${REMOTE_PATH} && sudo -n -u ${DEPLOY_USER} ./deploy/deploy.sh" 2>&1)"
 STATUS=$?
 set -e
 
@@ -61,5 +60,8 @@ if [[ $STATUS -eq 0 ]]; then
 else
   echo "Deploy failed:" >&2
   echo "$OUTPUT" >&2
+  if [[ "$OUTPUT" == *"sudo:"* ]]; then
+    echo "Hint: is your account on ${DEPLOY_HOST} in the 'deploy' group, and has deploy/setup.sh been re-run since the deployer split? See ${DEPLOY_DOC}." >&2
+  fi
   exit "$STATUS"
 fi
