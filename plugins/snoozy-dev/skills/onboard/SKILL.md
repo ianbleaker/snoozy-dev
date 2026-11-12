@@ -31,8 +31,8 @@ Tracked, at the repo root (not under `.claude/`: in companion-backed repos `.cla
 {
   "onboardSchema": 1,
   "verify": {
-    "edit": [{ "pattern": "\\.(ts|tsx)$", "command": "npx tsc --noEmit --incremental --tsBuildInfoFile .claude/.tsbuildinfo", "timeout": 30 }],
-    "stop": { "command": "npx tsc --noEmit --incremental --tsBuildInfoFile .claude/.tsbuildinfo && { git diff --name-only --diff-filter=d HEAD; git ls-files -o --exclude-standard; } | grep -E '\\.(ts|tsx)$' | xargs -r npx eslint", "timeout": 120 },
+    "edit": [{ "pattern": "\\.(ts|tsx)$", "command": "npx tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsbuildinfo", "timeout": 30 }],
+    "stop": { "command": "npx tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsbuildinfo && { git diff --name-only --diff-filter=d HEAD; git ls-files -o --exclude-standard; } | grep -E '\\.(ts|tsx)$' | xargs -r npx eslint", "timeout": 120 },
     "gate": "npx tsc --noEmit && npx eslint . --quiet && npm test --silent -- --run"
   }
 }
@@ -43,11 +43,11 @@ Tracked, at the repo root (not under `.claude/`: in companion-backed repos `.cla
 - `gate`: the full check the pre-commit hook and CI run (step 3–4).
 - `timeout` is in seconds (defaults: edit 30, stop 120). Write `onboardSchema` last (step 9).
 
-Add `.claude/.tsbuildinfo` to `.gitignore` for TypeScript.
+TypeScript's incremental cache goes in `node_modules/.cache/` (already git-ignored), not under `.claude/`, which is a symlink into the companion repo in companion-backed projects. On migration, delete a stale `.claude/.tsbuildinfo` and its `.gitignore` line (ask first).
 
 | Stack | `edit` (fast, changed file's language) | `stop` (final check) | `gate` |
 | --- | --- | --- | --- |
-| TypeScript | `\.(ts\|tsx)$` → `npx tsc --noEmit --incremental --tsBuildInfoFile .claude/.tsbuildinfo` | tsc + eslint on changed files (example above) | `npx tsc --noEmit && npx eslint . --quiet && npm test --silent -- --run` |
+| TypeScript | `\.(ts\|tsx)$` → `npx tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsbuildinfo` | tsc + eslint on changed files (example above) | `npx tsc --noEmit && npx eslint . --quiet && npm test --silent -- --run` |
 | Python | `\.py$` → `ruff check "$FILE"` | `ruff check . && pyright` | `ruff check . && pyright && pytest -q` |
 | Rust | `\.rs$` → `cargo check --quiet` | `cargo check --quiet && cargo clippy --quiet -- -D warnings` | stop + `&& cargo test --quiet` |
 | Go | `\.go$` → `go vet ./...` | `go vet ./... && go build ./...` | stop + `&& go test ./...` |
