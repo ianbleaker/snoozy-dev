@@ -5,6 +5,8 @@ description: Release a doc-changelog repo (one with doc-changelog.json) through 
 
 Convention and release flow: `${CLAUDE_PLUGIN_ROOT}/project-patterns/changelog/changelog.md`.
 
+**Cloud:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` first; if it exits 1, the cut (local git work) still runs, but opening the release PR and publishing the tag/GitHub Release are CLI-only: stop after the cut, relay that, and tell the user to run the open/publish step from a local session.
+
 `CL` is `${CLAUDE_PLUGIN_ROOT}/project-patterns/changelog`. `REPO` is `--repo <dir>` if given, else `node CL/config.mjs locate`. If locate fails, relay its error and stop. `RELEASE` means `bash CL/release.sh --repo REPO`.
 
 The release isn't public until the user merges its PR and this skill publishes it. Everything before **Open PR** is local and can be undone.
