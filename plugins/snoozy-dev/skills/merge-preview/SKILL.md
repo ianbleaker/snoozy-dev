@@ -13,7 +13,7 @@ Merge what the user just smoke-tested on preview — and only that. The user run
 
 2. **List.** Run `${CLAUDE_PLUGIN_ROOT}/skills/merge-preview/staged-prs.sh` from the project root. One line per open PR: `pr`, `issue` (`-` for a non-task branch), `head-sha`, `staged`, `checks`, `mergeable`, `base`, `after`, `blocked`, `title`. Then an `ORDER` line (or `CYCLE`), and any `UNCOVERED` preview commits. See the script header for the values. `after` holds any required merge order between staged PRs, drawn from stacked branches (a PR based on, or containing, another PR's branch) and the issues' `Blocked by:` lines. `ORDER` puts each PR after the PRs it depends on. `CYCLE` → report the looping PRs and stop. Don't guess an order.
 
-3. **Recheck preview.** Run the sense check against the `Preview URL:` from CLAUDE.md's `## Deploy`, exactly as `/stage-preview` step 4 does (one Bash call, `timeout: 600000`). `FAIL` → stop: preview is broken now, so the smoke test doesn't hold. Point the user to `/stage-preview` to restage and fix. No `Preview URL:` → say it was skipped and go on.
+3. **Recheck preview.** Run `eval "$(${CLAUDE_PLUGIN_ROOT}/project-patterns/deploy-config.sh)"` and run the sense check against `PREVIEW_URL` (already resolved, never the raw `Preview URL:` line from CLAUDE.md), exactly as `/stage-preview` step 4 does (one Bash call, `timeout: 600000`). `FAIL` → stop: preview is broken now, so the smoke test doesn't hold. Point the user to `/stage-preview` to restage and fix. Empty `PREVIEW_URL` (no `Preview URL:` line, or `{host}` unresolved) → say it was skipped and go on.
 
 4. **Gate.** A PR is eligible only if all hold:
    - `staged` — its head commit is on preview (what was tested);
