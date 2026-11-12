@@ -2,6 +2,8 @@
 
 Task status lives entirely in the `status:*` labels below — no GitHub Projects board is read or written. Cross-repo visibility is `gh search issues --owner <owner> --label status:ready --state open` (see "Status" below).
 
+**Cloud:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` once first; if it exits 1, do every GitHub step below with its cloud form from `${CLAUDE_PLUGIN_ROOT}/project-patterns/environments.md` (same intent, same order).
+
 Single source of truth for the GitHub Issues label taxonomy used across every project onboarded with `/onboard`. `/log-task`, `/next-task`, `/write-plan`, `/implement-plan`, `/audit-plan`, and `/onboard` all point here instead of repeating the list. Four groups, 12 labels total.
 
 ## `type:*` — what kind of work this is
@@ -81,6 +83,8 @@ The block is required for `/batch-tasks` eligibility: an issue without it is ine
 
 Set the native link for every `Blocked by` entry: `gh api -X POST repos/<repo>/issues/<NN>/dependencies/blocked_by -F issue_id=<blocker's .id>` (the REST `id`, not the issue number). `/next-task` skips issues with an open blocker, and ranks an issue below the rest while its `Conflicts with` names an issue that has an open `task/*` PR. `/stage-preview` ignores the line: it groups by the branches' real diffs, which is more accurate once code exists.
 
+In cloud, if the `blocked_by` endpoint fails, the body's `Blocked by:` line is the source of truth.
+
 ## Touches
 
 Every issue body ends with a `## Touches` section after the Dependencies block — the repo-relative files the work will change, backticked and comma-separated (`unknown` if not known yet):
@@ -95,6 +99,8 @@ Every issue body ends with a `## Touches` section after the Dependencies block �
 ## `gh label create` invocations
 
 Run against `<repo>` (`owner/name` form). Skip any that already exist.
+
+Label creation is CLI-only: in cloud, print these for the user to run from a CLI session.
 
 ```bash
 # type:*
