@@ -104,7 +104,7 @@ function projectCheck() {
   let md = '';
   try { md = fs.readFileSync('CLAUDE.md', 'utf8'); } catch {}
   const section = md.split(/^## Deploy\s*$/m)[1]?.split(/^## /m)[0] ?? '';
-  const cmd = section.match(/^Preview check:\s*(.+)$/m)?.[1]?.trim();
+  const cmd = section.match(/^(?:- )?Preview check:\s*(.+)$/m)?.[1]?.trim();
   if (!cmd) return { line: 'none (no `Preview check:` line in CLAUDE.md ## Deploy)', tail: '' };
 
   const run = spawnSync(cmd.replaceAll('{url}', url), { shell: true, encoding: 'utf8', timeout: 300_000 });

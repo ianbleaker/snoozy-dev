@@ -16,7 +16,13 @@ fi
 
 BRANCHES=("$@")
 
+DEPLOY_DOC="$(cd "$(dirname "$0")/../.." && pwd)/project-patterns/deploy-scripts.md"
+
+# Used only for gh.
 REPO="$(git remote get-url origin | sed -E 's#.*[:/]([^/]+/[^/.]+)(\.git)?$#\1#')"
+
+MERGE_LOG="$(mktemp)"
+trap 'rm -f "$MERGE_LOG"' EXIT
 
 git fetch origin --quiet
 git checkout -B preview origin/main --quiet
@@ -26,32 +32,40 @@ for b in "${BRANCHES[@]}"; do
   merge_refs+=("origin/${b}")
 done
 
-if ! git merge --no-edit "${merge_refs[@]}" >/tmp/preview-merge.log 2>&1; then
+if ! git merge --no-edit "${merge_refs[@]}" >"$MERGE_LOG" 2>&1; then
   echo "Merge conflict — branches involved:" >&2
   printf '  %s\n' "${BRANCHES[@]}" >&2
-  cat /tmp/preview-merge.log >&2
+  cat "$MERGE_LOG" >&2
   exit 1
 fi
 
 git push origin preview --force-with-lease
 
-DEPLOY_SECTION="$(awk '/^## Deploy/{flag=1; next} /^## /{flag=0} flag' CLAUDE.md 2>/dev/null || true)"
-DEPLOY_HOST="$(echo "$DEPLOY_SECTION" | awk -F': *' '/^Host:/{print $2}')"
-PREVIEW_URL="$(echo "$DEPLOY_SECTION" | sed -nE 's/^Preview URL: *//p')"
+# Read from the merged preview tree. Assigned first so a deploy-config.sh
+# failure (joined lines) stops here.
+DEPLOY_CONFIG="$("$(dirname "$0")/../../project-patterns/deploy-config.sh")"
+eval "$DEPLOY_CONFIG"
 
 if [[ -z "$DEPLOY_HOST" ]]; then
-  echo "Error: could not determine deploy host from CLAUDE.md's ## Deploy section." >&2
+  echo "Error: CLAUDE.md's ## Deploy section has no '- Host:' line. See ${DEPLOY_DOC}." >&2
+  exit 1
+fi
+if [[ -z "$PREVIEW_PATH" ]]; then
+  echo "Error: CLAUDE.md's ## Deploy section has no '- Remote path:' (or '- Preview path:') line. See ${DEPLOY_DOC}." >&2
   exit 1
 fi
 
 set +e
-DEPLOY_OUTPUT="$(ssh "$DEPLOY_HOST" "cd /opt/${REPO##*/}-preview && sudo ./deploy/preview-deploy.sh" 2>&1)"
+DEPLOY_OUTPUT="$(ssh "$DEPLOY_HOST" "cd ${PREVIEW_PATH} && sudo -n -u ${PREVIEW_DEPLOY_USER} ./deploy/preview-deploy.sh" 2>&1)"
 DEPLOY_STATUS=$?
 set -e
 
 if [[ $DEPLOY_STATUS -ne 0 ]]; then
   echo "Preview deploy failed (has preview-setup.sh been run on ${DEPLOY_HOST}?):" >&2
   echo "$DEPLOY_OUTPUT" >&2
+  if [[ "$DEPLOY_OUTPUT" == *"sudo:"* ]]; then
+    echo "Hint: is your account on ${DEPLOY_HOST} in the 'deploy' group, and has deploy/preview-setup.sh been re-run since the deployer split? See ${DEPLOY_DOC}." >&2
+  fi
   exit 1
 fi
 
@@ -89,5 +103,5 @@ echo "$DEPLOY_OUTPUT"
 if [[ -n "$PREVIEW_URL" ]]; then
   echo "Preview: ${PREVIEW_URL}"
 else
-  echo "Warning: no 'Preview URL:' line in CLAUDE.md's ## Deploy section — add it to get a link here." >&2
+  echo "Warning: no usable 'Preview URL:' in CLAUDE.md's ## Deploy section (missing, or {host} unresolved) — fix it to get a link here." >&2
 fi

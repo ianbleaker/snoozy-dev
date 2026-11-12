@@ -9,12 +9,13 @@ Deploy a project's current `main` to its production host via its own `deploy/dep
 
 ## Steps
 
-1. **Resolve the project name.** If no `<project-name>` argument was given, ask via `AskUserQuestion`, listing directories under `~/development/` that contain a `deploy/deploy.sh`.
+1. **Resolve the project name.** If no `<project-name>` argument was given, ask via `AskUserQuestion`, listing directories under `${SNOOZY_PROJECTS_DIR:-~/development}/` that contain a `deploy/deploy.sh`.
 
 2. Run `${CLAUDE_PLUGIN_ROOT}/skills/deploy/run-deploy.sh <project-name>` and relay its output verbatim, treating a nonzero exit as failure per the script's own reporting.
 
 ## Rules
 
+- The projects root is `SNOOZY_PROJECTS_DIR` (default `~/development`), set in the user's own `~/.claude/settings.json` `env` block, never in a tracked file.
 - No multi-host support, no host-selection logic — exactly one `Host:`/`Remote path:` pair per project's `CLAUDE.md`.
 - No rollback or retry logic — `deploy.sh` already commits to "no silent rollback"; this skill must not paper over that.
 - No `AskUserQuestion` confirmation gate before the SSH/restart step — running `/deploy <project-name>` is itself the deliberate signal.
