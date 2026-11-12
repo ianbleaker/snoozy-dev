@@ -40,6 +40,7 @@ fi
 if [[ "$(jq '.extraKnownMarketplaces["snoozy-dev"].autoUpdate' "$SETTINGS")" != "true" ]]; then
   tmp="$(mktemp "$(dirname "$SETTINGS")/settings.json.XXXXXX")"
   jq '.extraKnownMarketplaces["snoozy-dev"].autoUpdate = true' "$SETTINGS" > "$tmp"
+  chmod "$(stat -c %a "$SETTINGS" 2>/dev/null || stat -f %Lp "$SETTINGS")" "$tmp" # keep the file's mode (mktemp makes 0600)
   mv "$tmp" "$SETTINGS"
 fi
 
