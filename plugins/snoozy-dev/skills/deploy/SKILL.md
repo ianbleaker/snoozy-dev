@@ -5,6 +5,8 @@ description: SSH-deploy a named project to its production host, invoking that pr
 
 Deploy a project's current `main` to its production host via its own `deploy/deploy.sh`.
 
+**CLI-only:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` first; if it exits 1, relay its line, say this skill needs a local CLI session (SSH to the deploy host), and stop before any other step.
+
 ## Steps
 
 1. **Resolve the project name.** If no `<project-name>` argument was given, ask via `AskUserQuestion`, listing directories under `~/development/` that contain a `deploy/deploy.sh`.

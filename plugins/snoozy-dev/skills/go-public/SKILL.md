@@ -5,6 +5,8 @@ description: Move a private project to a new public GitHub repo with no trace of
 
 Publish a private project as a **new** public repo. The old repo can't be cleaned in place: GitHub keeps every merged PR's original commits (`refs/pull/*`) and only GitHub Support can delete them. So the old repo is left untouched and becomes a private archive, and a rewritten copy goes public.
 
+**CLI-only:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` first; if it exits 1, relay its line, say this skill needs a local CLI session (creates, transfers and archives repos), and stop before any other step.
+
 Run from the project's main checkout. Every step is outward-facing and not idempotent: **stop on the first error** and report exactly where things stand (what exists on GitHub, what was transferred, what the local clone points at).
 
 ## Arguments

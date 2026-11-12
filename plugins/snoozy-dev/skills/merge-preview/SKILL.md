@@ -5,6 +5,8 @@ description: After the user has smoke-tested preview, squash-merge every open PR
 
 Merge what the user just smoke-tested on preview — and only that. The user running this skill (plus the one confirmation below) is the approval that clicking merge on each PR used to be.
 
+**CLI-only:** run `${CLAUDE_PLUGIN_ROOT}/project-patterns/cloud-check.sh` first; if it exits 1, relay its line, say this skill needs a local CLI session (merges multiple PRs with `gh pr`), and stop before any other step.
+
 ## Steps
 
 1. **Determine the repo.** `git remote get-url origin` (same as `/log-task`).
