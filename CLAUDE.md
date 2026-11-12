@@ -13,6 +13,7 @@ Portable Claude Code configuration: the `snoozy-dev` plugin (skills, agents, pro
 ## Pointers
 - Playbook: SETUP.md; install/cloud notes: README.md
 - Conventions: `plugins/snoozy-dev/project-patterns/`
+- Changelog: `doc-changelog.json` (fragment flow, `project-patterns/changelog/changelog.md`). Every PR adds a fragment in `changes/` (branch-workflow PR step); releases go through `/doc-release` and bump `plugin.json`'s version.
 
 ## Doc-sync table
 | Edited area | Update this doc |
