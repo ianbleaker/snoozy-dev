@@ -21,6 +21,7 @@ The host alias and checkout path are per-project details recorded in a `## Deplo
 ## Deploy
 - Host: my-deploy-host
 - Remote path: /opt/my-app
+- Preview path: /opt/my-app-staging
 - Preview URL: http://{host}:<preview-port>
 - Preview check: node .claude/skills/smoke-test/preview-sense.mjs {url}
 ```
@@ -101,7 +102,7 @@ Run from the repo checkout on the host, **as the deployer, not root** (`sudo -n 
 
 1. `git pull --ff-only` — never a merge or rebase; if this fails (diverged history), that's a real problem to surface, not paper over.
 2. Reinstall dependencies (same stack-appropriate command as `setup.sh` step 5).
-3. Compare the unit template's `sha256sum` with `/var/lib/<deployer>/unit.sha256`. On a mismatch, print `Unit template changed: run 'sudo ./deploy/setup.sh' to apply it.` and carry on: a warning, not a failure.
+3. Compare the unit template's `sha256sum` with `/var/lib/<deployer>/unit.sha256`. On a mismatch, print a one-line `Unit template changed:` warning telling the user to re-run `deploy/setup.sh` as root to apply it, and carry on: a warning, not a failure.
 4. `sudo -n systemctl restart <service>`, the deployer's one root privilege.
 5. Brief sleep, then verify `systemctl is-active` (and `systemctl show` for the port), both without sudo since they work unprivileged. On success, print the port the service is listening on. On failure, print the `journalctl` pointer and exit non-zero.
 6. **No silent auto-rollback.** If the restart doesn't come back up cleanly, say so loudly and stop — the previous working tree state is still on disk for manual inspection, but nothing here reverts it automatically.
