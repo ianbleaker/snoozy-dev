@@ -1,38 +1,52 @@
 #!/usr/bin/env bash
-# Install the snoozy-dev plugin into the current user's Claude Code config.
-# Used for (a) a local machine and (b) the setup script of a Claude Code cloud
-# environment (cloud sessions do not read repo-declared plugins; see README).
+# Install the snoozy-dev plugin into the current user's Claude Code config from
+# the GitHub marketplace ianbleaker/snoozy-dev#stable (the latest release), with
+# marketplace auto-update on, so each new release is picked up at startup.
 #
-# Idempotent: re-running updates the checkout and plugin.
+# Works the same on a local machine and as a Claude Code cloud environment's
+# setup script (cloud sessions do not read repo-declared plugins; see README),
+# run from a checkout or piped from curl: it needs no local clone.
+#
+# Idempotent. Migrates an older install (a `directory` marketplace pointing at
+# a local checkout, or another ref) by removing and re-adding the marketplace.
+# SNOOZY_DEV_REF=<branch> installs another ref instead of `stable` (testing).
 set -euo pipefail
 
-# Default to the checkout this script runs from, so any clone location works;
-# with no checkout around it (e.g. piped from curl), the standard location.
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-.}")/.." 2>/dev/null && pwd || true)"
-if [[ -n "$ROOT" && -d "$ROOT/.git" ]]; then
-  DEFAULT_DIR="$ROOT"
-else
-  DEFAULT_DIR="$HOME/development/snoozy-dev"
-fi
-DIR="${SNOOZY_DEV_DIR:-$DEFAULT_DIR}"
-URL="https://github.com/ianbleaker/snoozy-dev.git"
+REPO="ianbleaker/snoozy-dev"
+REF="${SNOOZY_DEV_REF:-stable}"
+SRC="$REPO#$REF"
+SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 
-if [[ -d "$DIR/.git" ]]; then
-  # A local checkout may sit on a task branch (branch-workflow.md); only main
-  # tracks anything worth pulling.
-  branch="$(git -C "$DIR" branch --show-current)"
-  if [[ "$branch" == main ]]; then
-    git -C "$DIR" pull --ff-only -q
-  else
-    echo "Note: $DIR is on $branch — installing that branch's unmerged skills." >&2
-  fi
+command -v jq >/dev/null 2>&1 || { echo "Error: install-plugin.sh needs jq (macOS: brew install jq; Debian/Ubuntu: apt-get install jq)." >&2; exit 1; }
+
+current=""
+[[ -f "$SETTINGS" ]] && current="$(jq -c '.extraKnownMarketplaces["snoozy-dev"].source // empty' "$SETTINGS")"
+want="$(jq -cn --arg repo "$REPO" --arg ref "$REF" '{source: "github", repo: $repo, ref: $ref}')"
+
+if [[ -n "$current" && "$current" != "$want" ]]; then
+  echo "Migrating snoozy-dev marketplace: $current → github $SRC"
+  claude plugin marketplace remove snoozy-dev
+  current=""
+fi
+if [[ -z "$current" ]]; then
+  claude plugin marketplace add "$SRC"
 else
-  git clone -q --depth 1 "$URL" "$DIR"
+  claude plugin marketplace update snoozy-dev
 fi
 
-claude plugin marketplace add "$DIR" >/dev/null 2>&1 || claude plugin marketplace update snoozy-dev
-# install succeeds as a no-op when the plugin is already installed, so update
-# must run unconditionally or a re-run never picks up a new version.
+# Marketplace auto-update (what /plugin → Marketplaces → Enable auto-update
+# writes): only the autoUpdate key on this entry changes; the rest of the file
+# is left as it is.
+if [[ "$(jq '.extraKnownMarketplaces["snoozy-dev"].autoUpdate' "$SETTINGS")" != "true" ]]; then
+  tmp="$(mktemp "$(dirname "$SETTINGS")/settings.json.XXXXXX")"
+  jq '.extraKnownMarketplaces["snoozy-dev"].autoUpdate = true' "$SETTINGS" > "$tmp"
+  chmod "$(stat -c %a "$SETTINGS" 2>/dev/null || stat -f %Lp "$SETTINGS")" "$tmp" # keep the file's mode (mktemp makes 0600)
+  mv "$tmp" "$SETTINGS"
+fi
+
+# install succeeds as a no-op when the plugin is already installed (and
+# re-enables it after a marketplace remove), so update must run
+# unconditionally or a re-run never picks up a new version.
 claude plugin install snoozy-dev@snoozy-dev >/dev/null 2>&1 || true
-claude plugin update snoozy-dev@snoozy-dev
-echo "snoozy-dev plugin installed from $DIR"
+claude plugin update -y snoozy-dev@snoozy-dev
+echo "snoozy-dev plugin installed from github $SRC (auto-update on)"

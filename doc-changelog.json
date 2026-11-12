@@ -17,6 +17,7 @@
     { "id": "setup", "label": "Setup and onboarding", "paths": ["plugins/snoozy-dev/skills/onboard/**", "global/**", "scripts/install-plugin.sh", "README.md", "SETUP.md", ".claude-plugin/**", "plugins/snoozy-dev/.claude-plugin/**"] }
   ],
   "groupBy": "category",
-  "release": { "tagPrefix": "v", "versionFile": "plugins/snoozy-dev/.claude-plugin/plugin.json" },
+  "release": { "tagPrefix": "v", "versionFile": "plugins/snoozy-dev/.claude-plugin/plugin.json",
+    "stableBranch": "stable" },
   "commit": { "verify": "scripts/verify.sh" }
 }
