@@ -1,0 +1,16 @@
+{
+  "vps-systemd": {
+    "version": 2,
+    "migrations": {
+      "1": [
+        "Initial convention: `deploy/setup.sh`, `deploy/deploy.sh` and a systemd unit template, run as root."
+      ],
+      "2": [
+        "Update `deploy/setup.sh` and `deploy/preview-setup.sh` to the deployer privilege model in deploy-scripts.md: create `<repo>-deployer`, hand the checkout to it, chown only `ReadWritePaths` to the service user, install the visudo-validated sudoers drop-in, and record `unit.sha256`.",
+        "Update `deploy/deploy.sh` and `deploy/preview-deploy.sh` to run as the deployer, with `sudo -n systemctl restart` as their only root action and the unit-template hash warning.",
+        "On the host, create per-person accounts in the `deploy` group, move the git deploy key to `/var/lib/<repo>-deployer/.ssh`, and re-run `setup.sh` as root. Set `PermitRootLogin no` only after a verified non-root deploy.",
+        "Set `- Convention: vps-systemd@2` in the project's `## Deploy` section."
+      ]
+    }
+  }
+}

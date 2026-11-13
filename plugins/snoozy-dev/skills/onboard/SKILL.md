@@ -196,6 +196,20 @@ repo's `plans/` instead (set up by /go-public).>
 
 If CLAUDE.md already exists, don't recreate it — but check its Plans and Doc-sync sections (if present) for drift against the current convention (`docs/plans/`, `docs/plans/completed/`) and flag anything stale for the user rather than silently leaving it.
 
+## 7b. Record the deploy convention
+
+Read the current record with `eval "$("${CLAUDE_PLUGIN_ROOT}/project-patterns/deploy-config.sh" .)"` (the only `## Deploy` parser). If `DEPLOY_CONVENTION` is set, skip this step silently. Otherwise run:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/project-patterns/deploy-convention.mjs" detect .
+```
+
+- **It prints `<name>@<N>`:** show it and ask the user to confirm; they may correct the version. Then merge `- Convention: <confirmed>` into CLAUDE.md's `## Deploy`, creating the section with just that line if it's absent. If a malformed `Convention:` line is already there (`deploy-config.sh` warned about it), replace it only after asking. Never overwrite any other `## Deploy` line.
+- **It prints nothing, but the root has `Dockerfile`, `fly.toml`, `docker-compose.yml` or `compose.yaml`:** ask whether to record `- Convention: none` (the repo deploys some other way), merged the same way.
+- **Otherwise:** do nothing.
+
+The line uses the `- Key: value` list form, like every `## Deploy` line (see `deploy-scripts.md`).
+
 ## 8. Offer (don't auto-create)
 
 - Invariant guard hooks for any mechanical rules found in an existing CLAUDE.md.
@@ -210,7 +224,7 @@ If CLAUDE.md already exists, don't recreate it — but check its Plans and Doc-s
   If any `<kit>/` file already exists, leave it untouched and say so.
 - A document changelog if the project ships user-facing releases (rules, game content, docs) and has no `doc-changelog.json` (`${CLAUDE_PLUGIN_ROOT}/project-patterns/changelog/changelog.md`). On acceptance, copy the closest `${CLAUDE_PLUGIN_ROOT}/project-patterns/changelog/examples/*.json` to the content repo root (the repo holding `CHANGELOG.md`) as `doc-changelog.json`, then tailor `categories`, `areas` and `content` with the user, checking each change with `node "${CLAUDE_PLUGIN_ROOT}/project-patterns/changelog/fragments.mjs" render`. On re-runs, if the file already exists, validate it with `node "${CLAUDE_PLUGIN_ROOT}/project-patterns/changelog/config.mjs" show --repo <dir>` and report any errors. Never rewrite it.
 - The architecture-docs + component-reuse convention if it's a UI project with a components directory (`${CLAUDE_PLUGIN_ROOT}/project-patterns/architecture-docs.md`).
-- The deploy-scripts convention (`${CLAUDE_PLUGIN_ROOT}/project-patterns/deploy-scripts.md`): if the repo has no `deploy/` folder yet, offer the full four-script scaffold (`setup.sh`, `deploy.sh`, `preview-setup.sh`, `preview-deploy.sh`, a `.service` unit template), following the deployer privilege model: a deployer-owned checkout, a sudoers drop-in installed by `setup.sh`/`preview-setup.sh`, and a `deploy.sh` that never needs root beyond the one `systemctl restart`. Remind the user to add the `- Preview URL: http://{host}:<port>` line to `## Deploy` once `preview-setup.sh` has run and printed its port, plus an optional `- Preview check:` smoke command (see deploy-scripts.md). If `deploy/setup.sh`/`deploy.sh` already exist, leave them untouched — offer only the two preview scripts (`preview-setup.sh`, `preview-deploy.sh`) alongside — and if `setup.sh` predates the privilege split (no sudoers drop-in, or a `chown -R` to the service user), say so in one line, pointing at deploy-scripts.md, without editing it.
+- The deploy-scripts convention (`${CLAUDE_PLUGIN_ROOT}/project-patterns/deploy-scripts.md`): if the repo has no `deploy/` folder yet, offer the full four-script scaffold (`setup.sh`, `deploy.sh`, `preview-setup.sh`, `preview-deploy.sh`, a `.service` unit template), following the deployer privilege model: a deployer-owned checkout, a sudoers drop-in installed by `setup.sh`/`preview-setup.sh`, and a `deploy.sh` that never needs root beyond the one `systemctl restart`. A freshly scaffolded `deploy/` gets `- Convention: vps-systemd@<version>` in `## Deploy`, with the version from `${CLAUDE_PLUGIN_ROOT}/project-patterns/deploy-conventions.json`. Remind the user to add the `- Preview URL: http://{host}:<port>` line to `## Deploy` once `preview-setup.sh` has run and printed its port, plus an optional `- Preview check:` smoke command (see deploy-scripts.md). If `deploy/setup.sh`/`deploy.sh` already exist, leave them untouched — offer only the two preview scripts (`preview-setup.sh`, `preview-deploy.sh`) alongside — and if `setup.sh` predates the privilege split (no sudoers drop-in, or a `chown -R` to the service user), say so in one line, pointing at deploy-scripts.md, without editing it.
 - When `deploy/preview-setup.sh` and `deploy/preview-deploy.sh` already exist (or are being scaffolded in the same step), also offer the Tier 1 preview- automation workflow described in `${CLAUDE_PLUGIN_ROOT}/project-patterns/preview-workflow.md` (`.github/workflows/preview.yml`) — don't auto-create, same offer-don't- create posture as the rest of this step.
 
 ## 9. Stamp and commit
