@@ -19,6 +19,15 @@ SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 
 command -v jq >/dev/null 2>&1 || { echo "Error: install-plugin.sh needs jq (macOS: brew install jq; Debian/Ubuntu: apt-get install jq)." >&2; exit 1; }
 
+# Check the ref exists before touching anything: a migration removes the old
+# marketplace (uninstalling the plugin), so a missing ref would leave nothing
+# installed. `stable` exists only once /doc-release has published a release.
+if ! git ls-remote --exit-code --heads "https://github.com/$REPO.git" "$REF" >/dev/null 2>&1; then
+  echo "Error: branch '$REF' not found on github.com/$REPO (or GitHub unreachable); nothing changed." >&2
+  [[ "$REF" == "stable" ]] && echo "'stable' is created by the first published release (/doc-release). Until then, install a branch: SNOOZY_DEV_REF=<branch> $0" >&2
+  exit 1
+fi
+
 current=""
 [[ -f "$SETTINGS" ]] && current="$(jq -c '.extraKnownMarketplaces["snoozy-dev"].source // empty' "$SETTINGS")"
 want="$(jq -cn --arg repo "$REPO" --arg ref "$REF" '{source: "github", repo: $repo, ref: $ref}')"
