@@ -7,7 +7,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'deploy-config.sh')
-const VARS = ['DEPLOY_HOST', 'REMOTE_PATH', 'PREVIEW_PATH', 'DEPLOY_USER', 'PREVIEW_DEPLOY_USER', 'PREVIEW_URL', 'PREVIEW_CHECK']
+const VARS = ['DEPLOY_HOST', 'REMOTE_PATH', 'PREVIEW_PATH', 'DEPLOY_USER', 'PREVIEW_DEPLOY_USER', 'PREVIEW_URL', 'PREVIEW_CHECK', 'DEPLOY_CONVENTION', 'DEPLOY_CONVENTION_VERSION']
 
 // A fake `ssh` on PATH: `-G` prints a documentation-range hostname, or
 // fails when sshExit is nonzero.
@@ -41,6 +41,7 @@ const LIST_FORM = `# Proj
 - Remote path: /opt/app
 - Preview URL: http://{host}:8081
 - Preview check: node .claude/skills/smoke-test/preview-sense.mjs {url}
+- Convention: vps-systemd@2
 
 ## Next
 `
@@ -56,6 +57,8 @@ test('all lines in the - Key: list form', () => {
     PREVIEW_DEPLOY_USER: 'app-preview-deployer',
     PREVIEW_URL: 'http://203.0.113.5:8081',
     PREVIEW_CHECK: 'node .claude/skills/smoke-test/preview-sense.mjs {url}',
+    DEPLOY_CONVENTION: 'vps-systemd',
+    DEPLOY_CONVENTION_VERSION: '2',
   })
 })
 
@@ -66,6 +69,8 @@ test('the same lines in the legacy bare Key: form', () => {
   assert.equal(vars.REMOTE_PATH, '/opt/app')
   assert.equal(vars.PREVIEW_URL, 'http://203.0.113.5:8081')
   assert.equal(vars.PREVIEW_CHECK, 'node .claude/skills/smoke-test/preview-sense.mjs {url}')
+  assert.equal(vars.DEPLOY_CONVENTION, 'vps-systemd')
+  assert.equal(vars.DEPLOY_CONVENTION_VERSION, '2')
 })
 
 test('joined lines exit 1 with the joined-lines message', () => {
@@ -129,4 +134,39 @@ test('a Preview check: value with spaces and quotes survives eval', () => {
   const check = `node "a b.mjs" --flag 'x y' {url}`
   const { vars } = run(`## Deploy\n- Host: h\n- Preview check: ${check}\n`)
   assert.equal(vars.PREVIEW_CHECK, check)
+})
+
+test('Convention: none: name none, version empty', () => {
+  const { status, vars, stderr } = run('## Deploy\n- Host: h\n- Convention: none\n')
+  assert.equal(status, 0)
+  assert.equal(vars.DEPLOY_CONVENTION, 'none')
+  assert.equal(vars.DEPLOY_CONVENTION_VERSION, '')
+  assert.equal(stderr, '')
+})
+
+test('a malformed Convention: value: both vars empty, warning, exit 0', () => {
+  for (const bad of ['vps-systemd', 'vps-systemd@two', 'VPS@2', 'vps systemd@2']) {
+    const { status, vars, stderr } = run(`## Deploy\n- Host: h\n- Convention: ${bad}\n`)
+    assert.equal(status, 0, bad)
+    assert.equal(vars.DEPLOY_CONVENTION, '', bad)
+    assert.equal(vars.DEPLOY_CONVENTION_VERSION, '', bad)
+    assert.equal(vars.DEPLOY_HOST, 'h', bad)
+    assert.ok(stderr.includes(`deploy-config: unrecognized Convention: value '${bad}' (expected <name>@<version> or none); ignoring it`), stderr)
+  }
+})
+
+test('Convention: joined with another key exits 1', () => {
+  for (const md of ['## Deploy\n- Host: h Convention: vps-systemd@2\n', '## Deploy\n- Convention: vps-systemd@2 Host: h\n']) {
+    const { status, stderr } = run(md)
+    assert.equal(status, 1, md)
+    assert.match(stderr, /were joined onto one line/)
+  }
+})
+
+test('no Convention: line: both vars empty, no warning', () => {
+  const { status, vars, stderr } = run('## Deploy\n- Host: h\n')
+  assert.equal(status, 0)
+  assert.equal(vars.DEPLOY_CONVENTION, '')
+  assert.equal(vars.DEPLOY_CONVENTION_VERSION, '')
+  assert.equal(stderr, '')
 })

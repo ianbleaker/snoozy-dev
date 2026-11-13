@@ -18,6 +18,13 @@
 #                         HostName from `ssh -G` (empty, with a warning, if
 #                         it can't be resolved)
 #   PREVIEW_CHECK         Preview check:, raw ({url} left in place)
+#   DEPLOY_CONVENTION     Convention: name (e.g. vps-systemd), or `none`
+#   DEPLOY_CONVENTION_VERSION
+#                         Convention: version (an integer; empty for `none`)
+#
+# A Convention: value other than `<name>@<version>` or `none` is ignored
+# with a warning on stderr (both convention vars empty, exit 0): metadata
+# must never block a deploy.
 #
 # A missing CLAUDE.md or `## Deploy` section prints every var empty and
 # exits 0; callers decide what's fatal. Lines joined onto one line (e.g. by
@@ -42,20 +49,32 @@ get() {
     | sed -nE "/^(- )?$1:/{s/^(- )?$1:[[:space:]]*//;s/[[:space:]]+\$//;p;q;}"
 }
 
-KEYS_RE='(^|[[:space:]])(Host|Remote path|Preview path|Preview URL|Preview check):'
+KEYS_RE='(^|[[:space:]])(Host|Remote path|Preview path|Preview URL|Preview check|Convention):'
 
 DEPLOY_HOST=$(get 'Host')
 REMOTE_PATH=$(get 'Remote path')
 PREVIEW_PATH=$(get 'Preview path')
 PREVIEW_URL=$(get 'Preview URL')
 PREVIEW_CHECK=$(get 'Preview check')
+CONVENTION_RAW=$(get 'Convention')
 
-for v in "$DEPLOY_HOST" "$REMOTE_PATH" "$PREVIEW_PATH" "$PREVIEW_URL" "$PREVIEW_CHECK"; do
+for v in "$DEPLOY_HOST" "$REMOTE_PATH" "$PREVIEW_PATH" "$PREVIEW_URL" "$PREVIEW_CHECK" "$CONVENTION_RAW"; do
   if [[ "$v" =~ $KEYS_RE ]]; then
     echo "deploy-config: ## Deploy lines in $CLAUDE_MD were joined onto one line; rewrite them as '- Key: value' list items (see deploy-scripts.md)" >&2
     exit 1
   fi
 done
+
+DEPLOY_CONVENTION=""
+DEPLOY_CONVENTION_VERSION=""
+if [[ "$CONVENTION_RAW" == none ]]; then
+  DEPLOY_CONVENTION=none
+elif [[ "$CONVENTION_RAW" =~ ^([a-z0-9-]+)@([0-9]+)$ ]]; then
+  DEPLOY_CONVENTION="${BASH_REMATCH[1]}"
+  DEPLOY_CONVENTION_VERSION="${BASH_REMATCH[2]}"
+elif [[ -n "$CONVENTION_RAW" ]]; then
+  echo "deploy-config: unrecognized Convention: value '$CONVENTION_RAW' (expected <name>@<version> or none); ignoring it" >&2
+fi
 
 strip_slash() {
   local p="$1"
@@ -87,6 +106,6 @@ if [[ "$PREVIEW_URL" == *"{host}"* ]]; then
   fi
 fi
 
-for var in DEPLOY_HOST REMOTE_PATH PREVIEW_PATH DEPLOY_USER PREVIEW_DEPLOY_USER PREVIEW_URL PREVIEW_CHECK; do
+for var in DEPLOY_HOST REMOTE_PATH PREVIEW_PATH DEPLOY_USER PREVIEW_DEPLOY_USER PREVIEW_URL PREVIEW_CHECK DEPLOY_CONVENTION DEPLOY_CONVENTION_VERSION; do
   printf '%s=%q\n' "$var" "${!var}"
 done
