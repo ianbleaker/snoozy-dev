@@ -1,31 +1,4 @@
 {
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "f=$(jq -r '.tool_input.file_path // \"\"'); echo \"$f\" | grep -qE '\\.(sh|mjs)$' && cd \"$CLAUDE_PROJECT_DIR\" && scripts/verify.sh \"$f\" 2>&1 | tail -5 || true",
-            "timeout": 30,
-            "statusMessage": "Syntax-checking..."
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && VERIFY_FAST=1 scripts/verify.sh 2>&1 | tail -10 || true",
-            "timeout": 60,
-            "statusMessage": "Final syntax check..."
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(git status*)", "Bash(git log*)", "Bash(git diff*)", "Bash(git show*)",

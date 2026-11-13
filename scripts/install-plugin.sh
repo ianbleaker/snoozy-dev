@@ -50,3 +50,27 @@ fi
 claude plugin install snoozy-dev@snoozy-dev >/dev/null 2>&1 || true
 claude plugin update -y snoozy-dev@snoozy-dev
 echo "snoozy-dev plugin installed from github $SRC (auto-update on)"
+
+# The Claude-free and md-unwrap hooks used to be wired into settings.json from
+# a local checkout (global/hooks/*.py); the plugin now ships them in
+# hooks/hooks.json. Remove the old entries, but only once the installed plugin
+# really has hooks.json, so there is never a gap with no Claude-free guard.
+installed="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/installed_plugins.json"
+install_path=""
+[[ -f "$installed" ]] && install_path="$(jq -r '(.plugins["snoozy-dev@snoozy-dev"] // []) | (map(select(.scope == "user")) + .)[0].installPath // empty' "$installed")"
+if [[ -n "$install_path" && -f "$install_path/hooks/hooks.json" ]]; then
+  filter='if has("hooks") then .hooks |= (map_values(map(select(all(.hooks[]; .command | contains("snoozy-dev/global/hooks/") | not)))) | with_entries(select(.value | length > 0))) else . end'
+  count='[.hooks // {} | .[][] | select(any(.hooks[]; .command | contains("snoozy-dev/global/hooks/")))] | length'
+  removed="$(jq "$count" "$SETTINGS")"
+  if [[ "$removed" -gt 0 ]]; then
+    tmp="$(mktemp "$(dirname "$SETTINGS")/settings.json.XXXXXX")"
+    jq "$filter" "$SETTINGS" > "$tmp"
+    chmod "$(stat -c %a "$SETTINGS" 2>/dev/null || stat -f %Lp "$SETTINGS")" "$tmp" # keep the file's mode (mktemp makes 0600)
+    mv "$tmp" "$SETTINGS"
+    echo "Removed $removed old snoozy-dev/global/hooks entries from $SETTINGS (the plugin's hooks.json replaces them)"
+  else
+    echo "No old snoozy-dev/global/hooks entries in $SETTINGS"
+  fi
+else
+  echo "Installed plugin has no hooks/hooks.json yet: left the snoozy-dev/global/hooks entries in $SETTINGS alone"
+fi

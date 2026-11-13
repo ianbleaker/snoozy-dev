@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "changes": {
+    "1": [
+      "Adds .snoozy-dev.json (verify commands + onboard stamp); the plugin now runs the edit/Stop verify hooks and feeds failures back to Claude",
+      "Removes the repo's own generic verify hooks from .claude/settings.json (asked first)",
+      "Pre-commit gate and ci.yml run verify.gate from .snoozy-dev.json"
+    ]
+  }
+}
