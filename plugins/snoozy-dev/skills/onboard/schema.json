@@ -1,10 +1,13 @@
 {
-  "schema": 1,
+  "schema": 2,
   "changes": {
     "1": [
       "Adds .snoozy-dev.json (verify commands + onboard stamp); the plugin now runs the edit/Stop verify hooks and feeds failures back to Claude",
       "Removes the repo's own generic verify hooks from .claude/settings.json (asked first)",
       "Pre-commit gate and ci.yml run verify.gate from .snoozy-dev.json"
+    ],
+    "2": [
+      "Records the deploy convention as a - Convention: <name>@<version> line in CLAUDE.md's ## Deploy (detected, confirmed with the user; no-op without deploy/ or other-platform files)"
     ]
   }
 }
