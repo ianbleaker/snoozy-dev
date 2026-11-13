@@ -24,6 +24,7 @@ The host alias and checkout path are per-project details recorded in a `## Deplo
 - Preview path: /opt/my-app-staging
 - Preview URL: http://{host}:<preview-port>
 - Preview check: node .claude/skills/smoke-test/preview-sense.mjs {url}
+- Convention: vps-systemd@2
 ```
 
 Each line is a `- Key: value` list item because the markdown unwrap hook joins consecutive plain lines into one paragraph, and list items stay separate. The bare `Key: value` form is still accepted as legacy, but lines that have been joined onto one line fail loudly rather than deploy to a garbage host.
@@ -33,8 +34,18 @@ Each line is a `- Key: value` list item because the markdown unwrap hook joins c
 - `Preview path:` is optional and defaults to the `Remote path:` value plus `-preview` (e.g. `/opt/my-app-preview`).
 - `Preview URL:` is added once `preview-setup.sh` has run and printed the port it chose. `{host}` is resolved per user to the `HostName` that `ssh -G <Host alias>` reports (the alias itself if none is set), so the tracked file never holds the server's address. A URL without `{host}` is used as is. `/stage-preview` and `/batch-tasks` print it in their reports (a missing line is a warning, not a failure).
 - `Preview check:` is optional. It is a command that exercises the app's basic functionality against preview, and `{url}` is replaced with the preview URL. Exit 0 means pass. Usually it's one of the project's smoke-test scenarios (see `smoke-driver.md`). `/stage-preview` runs it as the last layer of its post-deploy sense check, after reachability and a headless load/console check. Without it, basic functionality goes unchecked and the sense check says so.
+- `Convention:` records which version of this convention the project follows, as `<name>@<version>` (e.g. `vps-systemd@2`), or `none` for a repo that deploys some other way or not at all. Onboard fills it in. A malformed value is ignored with a warning, never a failed deploy. See "Convention versions" below.
 
-All parsing lives in one helper, `project-patterns/deploy-config.sh` (`eval "$(deploy-config.sh [project-dir])"`), which prints `DEPLOY_HOST`, `REMOTE_PATH`, `PREVIEW_PATH`, `DEPLOY_USER`, `PREVIEW_DEPLOY_USER`, `PREVIEW_URL` (with `{host}` resolved) and `PREVIEW_CHECK`. Callers never parse `## Deploy` themselves. This doc only fixes the *shape* of the invocation (SSH in, `cd` to the known checkout, run the known script name as its deployer), not a specific host. If `preview-setup.sh` hasn't been run yet on that host (no checkout at the preview path, no service installed), a caller should say so and stop rather than attempting first-time setup inline.
+All parsing lives in one helper, `project-patterns/deploy-config.sh` (`eval "$(deploy-config.sh [project-dir])"`), which prints `DEPLOY_HOST`, `REMOTE_PATH`, `PREVIEW_PATH`, `DEPLOY_USER`, `PREVIEW_DEPLOY_USER`, `PREVIEW_URL` (with `{host}` resolved), `PREVIEW_CHECK`, `DEPLOY_CONVENTION` (the name, or `none`) and `DEPLOY_CONVENTION_VERSION`. Callers never parse `## Deploy` themselves. This doc only fixes the *shape* of the invocation (SSH in, `cd` to the known checkout, run the known script name as its deployer), not a specific host. If `preview-setup.sh` hasn't been run yet on that host (no checkout at the preview path, no service installed), a caller should say so and stop rather than attempting first-time setup inline.
+
+## Convention versions
+
+- `vps-systemd@1`: the setup before the privilege split: `setup.sh` and `deploy.sh` run as root, no deployer.
+- `vps-systemd@2`: the privilege model below: a per-instance deployer, the sudoers drop-in and per-person host accounts.
+
+The registry, `project-patterns/deploy-conventions.json`, holds each convention's current version and the migration notes for every version. The detection rule lives in `project-patterns/deploy-convention.mjs`: `deploy/setup.sh` plus a `deploy/*.service` is `vps-systemd`, version 2 when `setup.sh` installs a sudoers drop-in. The session-start check compares the recorded `Convention:` with both. When a project is behind, it offers a draft migration issue listing the notes. When the files have drifted from the record (`deploy/` gone, a `Dockerfile` appearing, an unrecorded `deploy/`), it flags that.
+
+Maintainer rule: a change to this convention that existing projects must act on bumps its version in the registry and adds that version's migration notes. Notes end up in issues in other repos, so they never mention Claude, Anthropic or the `CLAUDE.md` filename: say "the `## Deploy` section".
 
 ## Privilege model
 
